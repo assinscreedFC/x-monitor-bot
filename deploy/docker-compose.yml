@@ -1,0 +1,18 @@
+services:
+  telegram_bot:
+    build:
+      # Le contexte est le dossier parent (le root du projet)
+      context: ..
+      # Le Dockerfile est dans le dossier deploy (relatif au contexte)
+      dockerfile: deploy/Dockerfile
+    container_name: telegram_bot
+    restart: always
+    # Le .env file est dans config (relatif au contexte)
+    env_file:
+      - ../config/.env
+    volumes:
+      # Les volumes sont mapp├®s depuis le root (relatif au contexte)
+      - ../storage:/app/storage
+      - ../logs:/app/logs
+      - ../project:/app/profile_data # <-- Elle pointe vers ton dossier
+    working_dir: /app

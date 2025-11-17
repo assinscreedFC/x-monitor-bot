@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# --- ÉTAPE 1: ALLER AU BON ENDROIT ---
+echo "--- Étape 1/4 : Navigation vers le projet ---"
+cd /home/anis/telegram_bot_project
+
+# --- ÉTAPE 2: ACTIVER L'ENVIRONNEMENT PYTHON ---
+echo "--- Étape 2/4 : Activation de l'environnement Python ---"
+source venv/bin/activate
+
+# --- ÉTAPE 3: CRÉER LA SESSION (Partie Manuelle) ---
+echo "--- Étape 3/4 : Lancement du script de création de session ---"
+echo ""
+# Réinitialiser les anciens fichiers
+rm -f storage/monitors.json storage/session.json
+
+# Lancer le script. Il va te donner les instructions.
+python3 setup_session.py
+# (Le script va maintenant se mettre en pause et te demander de te connecter
+# dans Chrome, puis d'appuyer sur Entrée...)
+
+# --- ÉTAPE 4: LANCER LE BOT (Automatique après l'étape 3) ---
+echo ""
+echo "--- Étape 4/4 : Lancement de Docker ---"
+echo "(Si la session a été exportée avec succès, le bot va démarrer)"
+
+# On lance Docker (pas besoin de sudo, car tu es dans le groupe 'docker')
+docker compose -f deploy/docker-compose.yml up --build
