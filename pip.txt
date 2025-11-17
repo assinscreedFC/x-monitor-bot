@@ -1,28 +1,39 @@
-#!/bin/bash
+login: AgustinaSh73862
+password: wNI73KQ5LWw
+2FA: 2fa.fb.rip/4G65R47BK62GFEGZ
 
-# --- ÉTAPE 1: ALLER AU BON ENDROIT ---
-echo "--- Étape 1/4 : Navigation vers le projet ---"
-cd /home/anis/telegram_bot_project
+login: ludie_mikk29972
+password: 7o03OJUoX0kH
+2FA: 2fa.fb.rip/BWB2O4MNEGQYCZ5B
 
-# --- ÉTAPE 2: ACTIVER L'ENVIRONNEMENT PYTHON ---
-echo "--- Étape 2/4 : Activation de l'environnement Python ---"
+login: MorganStar14145
+password: zfYgYgJJrau
+2FA: 2fa.fb.rip/LQW6ICUUJ2LMEGNJ
+
+login: GNatasha39300
+password: gr1BcOqPDg
+2FA: 2fa.fb.rip/24PL75CQWHA5FR72
+
+login: TRacheal37936
+password: cAYRcOiBcO
+2FA: 2fa.fb.rip/GZJFRTBT4CNKNMSI
+
+my_playwright_profile_1
+
 source venv/bin/activate
 
-# --- ÉTAPE 3: CRÉER LA SESSION (Partie Manuelle) ---
-echo "--- Étape 3/4 : Lancement du script de création de session ---"
-echo ""
-# Réinitialiser les anciens fichiers
-rm -f storage/monitors.json storage/session.json
-
-# Lancer le script. Il va te donner les instructions.
-python3 setup_session.py
-# (Le script va maintenant se mettre en pause et te demander de te connecter
-# dans Chrome, puis d'appuyer sur Entrée...)
-
-# --- ÉTAPE 4: LANCER LE BOT (Automatique après l'étape 3) ---
-echo ""
-echo "--- Étape 4/4 : Lancement de Docker ---"
-echo "(Si la session a été exportée avec succès, le bot va démarrer)"
-
-# On lance Docker (pas besoin de sudo, car tu es dans le groupe 'docker')
-docker compose -f deploy/docker-compose.yml up --build
+browser = p.chromium.launch_persistent_context(
+        user_data_dir=temp_profile,
+        channel="chrome",
+        headless=False,
+        args=[
+            "--start-maximized",
+            "--disable-blink-features=AutomationControlled",
+            "--disable-infobars",
+            "--disable-features=IsolateOrigins,site-per-process"
+        ],
+        proxy: {
+        server: 'isp:oxylabs.io',
+        username: 'bibobi',
+        password: 'Bibobibabobi134679+'},
+    )

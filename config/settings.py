@@ -43,6 +43,8 @@ os.environ['TZ'] = TZ
 # --- AJOUTS CORRIGÉS : Identifiants X/Twitter ---
 X_USERNAME = os.getenv('X_USERNAME')
 X_PASSWORD = os.getenv('X_PASSWORD')
+PROXY_AUTH_USERNAME = os.getenv("PROXY_AUTH_USERNAME")
+PROXY_AUTH_PASSWORD = os.getenv("PROXY_AUTH_PASSWORD")
 
 if not X_USERNAME or not X_PASSWORD:
     logging.warning("X_USERNAME ou X_PASSWORD ne sont pas définis. Le login automatique échouera si la session est invalide.")

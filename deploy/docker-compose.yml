@@ -15,4 +15,9 @@ services:
       - ../storage:/app/storage
       - ../logs:/app/logs
       - ../project:/app/profile_data # <-- Elle pointe vers ton dossier
+      - ../my_playwright_profile_1:/app/my_playwright_profile_1
+      - ../my_playwright_profile_2:/app/my_playwright_profile_2
+      - ../my_playwright_profile_3:/app/my_playwright_profile_3
+      - ../my_playwright_profile_4:/app/my_playwright_profile_4
+      - ../my_playwright_profile_5:/app/my_playwright_profile_5
     working_dir: /app
