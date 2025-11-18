@@ -46,7 +46,7 @@ async def send_long_message(update: Update, text: str, parse_mode: str = None):
         header = ""
         if i > 0:
             # Ce header utilise MarkdownV2, donc le parse_mode doit être correct
-            header = f"**(Suite \- Partie {i + 1}/{len(parts)})**\n"
+            header = rf"**(Suite \- Partie {i + 1}/{len(parts)})**\n"
 
         await update.message.reply_text(header + part, parse_mode=parse_mode)
         # Petite pause pour éviter le flood si la liste est très longue
@@ -95,7 +95,7 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         safe_last_status = escape_markdown(last_status, version=2)
 
         entry = (
-            f"\n\-\-\- Monitor ID: `{safe_id}` \-\-\-\n"  # Les '-' doivent aussi être échappés !
+            rf"\n\-\-\- Monitor ID: `{safe_id}` \-\-\-\n"  # Les '-' doivent aussi être échappés !
             f"Statut: {status}\n"
             f"Compte X: **@{safe_username}**\n"
             f"Chat Cible: `{safe_chat_id}`\n"
