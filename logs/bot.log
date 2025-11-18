@@ -1,0 +1,60 @@
+2025-11-17 19:16:34,247 - TelegramBot - INFO - Configuration chargée. 4 workers configurés.
+2025-11-17 19:16:34,248 - TelegramBot - INFO - Chemin stockage: /app/storage, Chemin logs: /app/logs
+2025-11-17 19:16:35,149 - root - INFO - StorageManager initialisé (base: storage)
+2025-11-17 19:16:35,322 - TelegramBot - INFO - Démarrage du chef d'orchestre...
+2025-11-17 19:16:35,323 - TelegramBot - INFO - Configuration de l'application Telegram...
+2025-11-17 19:16:35,577 - TelegramBot - INFO - Application Telegram configurée avec les handlers.
+2025-11-17 19:16:35,821 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getMe "HTTP/1.1 200 OK"
+2025-11-17 19:16:35,886 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/deleteWebhook "HTTP/1.1 200 OK"
+2025-11-17 19:16:35,888 - telegram.ext.Application - INFO - Application started
+2025-11-17 19:16:35,889 - TelegramBot - INFO - Bot Telegram démarré et en polling.
+2025-11-17 19:16:37,374 - TelegramBot - INFO - Playwright démarré en mode async.
+2025-11-17 19:16:37,375 - TelegramBot - INFO - Lancement de 4 worker(s)...
+2025-11-17 19:16:37,376 - TelegramBot - INFO - [Worker 0] Démarré et en attente de tâches.
+2025-11-17 19:16:37,377 - TelegramBot - INFO - [Worker 1] Démarré et en attente de tâches.
+2025-11-17 19:16:37,377 - TelegramBot - INFO - [Worker 2] Démarré et en attente de tâches.
+2025-11-17 19:16:37,378 - TelegramBot - INFO - [Worker 3] Démarré et en attente de tâches.
+2025-11-17 19:16:37,379 - TelegramBot - INFO - [Producer] Démarré.
+2025-11-17 19:16:37,380 - TelegramBot - INFO - [Producer] Cycle de récupération des tâches...
+2025-11-17 19:16:37,382 - root - WARNING - Fichier monitors.json non trouvé, retourne data vide.
+2025-11-17 19:16:37,383 - TelegramBot - INFO - [Producer] Aucun monitor actif. En attente...
+2025-11-17 19:16:37,384 - TelegramBot - INFO - [Producer] Cycle terminé. Prochain cycle dans 271 secondes.
+2025-11-17 19:16:46,020 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:16:56,080 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:17:06,130 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:17:16,161 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:17:26,189 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:17:36,238 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:17:46,344 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:17:56,488 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:18:06,627 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:18:16,638 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:18:26,676 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:18:36,447 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:18:45,684 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:18:54,881 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:19:06,307 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:19:16,142 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:19:25,338 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:19:36,637 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:19:45,836 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:19:55,138 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:20:07,211 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:20:16,416 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:20:25,706 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:20:37,613 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:20:46,903 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:20:56,201 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:21:05,489 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:21:17,486 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:21:21,055 - TelegramBot - INFO - [Producer] Cycle de récupération des tâches...
+2025-11-17 19:21:21,070 - root - WARNING - Fichier monitors.json non trouvé, retourne data vide.
+2025-11-17 19:21:21,072 - TelegramBot - INFO - [Producer] Aucun monitor actif. En attente...
+2025-11-17 19:21:21,074 - TelegramBot - INFO - [Producer] Cycle terminé. Prochain cycle dans 347 secondes.
+2025-11-17 19:21:26,689 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:21:35,977 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:21:47,909 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:21:57,111 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:22:06,404 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:22:18,448 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
+2025-11-17 19:22:27,646 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8362498948:AAGCHOaOWeHUhNLR1IVb8kxW6gPhI_-dotA/getUpdates "HTTP/1.1 200 OK"
