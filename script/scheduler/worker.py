@@ -97,10 +97,10 @@ async def run_worker(worker_id: int, task_queue: Queue, stop_event: asyncio.Even
             monitor_task = await task_queue.get()
 
             # 2. Tenter de récupérer un proxy disponible
-            proxy_info = await get_next_available_proxy()
-            if proxy_info:
-                selected_proxy_id = proxy_info['id']
-                proxy_config = {'server': proxy_info['proxy_url']}
+            proxy_config = await get_next_available_proxy()  # proxy_config contient maintenant id, server, username, password
+            if proxy_config:
+                # L'ID est maintenant directement dans le dictionnaire proxy_config
+                selected_proxy_id = proxy_config.pop('id')
 
             logger.info(
                 f"[Worker {worker_id}] Tâche reçue: Scraper @{monitor_task.get('x_account')} (Proxy ID: {selected_proxy_id or 'None'})")

@@ -1,7 +1,7 @@
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from core.auth import whitelist_required
 from .commands import start
-from .commands import help  # <-- NOUVEL IMPORT
+from .commands import help
 from .commands import add_watch
 from .commands import whitelist_add
 from .commands import whitelist_remove
@@ -12,16 +12,21 @@ from .commands import status
 from .commands import proxy_add
 from .commands import proxy_list
 from .commands import proxy_remove
+from .commands import proxy_enable  # Pour la commande /proxy_enable
 
 
 def register_handlers(app: Application):
     """
     Attache tous les gestionnaires de commandes à l'application bot.
+    Toutes les commandes sont désormais protégées par la whitelist.
     """
 
-    # --- COMMANDES DÉPROTÉGÉES ---
-    app.add_handler(CommandHandler("start", start.execute))
-    app.add_handler(CommandHandler("help", help.execute))  # <-- NOUVEL HANDLER
+    # --- COMMANDES DÉSORMAIS PROTÉGÉES ---
+    # Note: La commande /whitelist_add dans son implémentation gère
+    # le cas où la liste est vide.
+
+    app.add_handler(CommandHandler("start", whitelist_required(start.execute)))
+    app.add_handler(CommandHandler("help", help.execute))  # Le décorateur est dans help.py
 
     # --- COMMANDES PROTÉGÉES (AVEC DÉCORATEUR) ---
 
@@ -30,7 +35,7 @@ def register_handlers(app: Application):
     app.add_handler(CommandHandler("list_watches", whitelist_required(list_watches.execute)))
     app.add_handler(CommandHandler("remove_watch", whitelist_required(remove_watch.execute)))
 
-    # Contrôle des moniteurs
+    # Contrôle des moniteurs (Décorateur intégré dans le fichier monitor_control.py)
     app.add_handler(CommandHandler("start_monitor", monitor_control.start_monitor))
     app.add_handler(CommandHandler("stop_monitor", monitor_control.stop_monitor))
 
@@ -42,6 +47,7 @@ def register_handlers(app: Application):
     app.add_handler(CommandHandler("proxy_add", whitelist_required(proxy_add.execute)))
     app.add_handler(CommandHandler("proxy_list", whitelist_required(proxy_list.execute)))
     app.add_handler(CommandHandler("proxy_remove", whitelist_required(proxy_remove.execute)))
+    app.add_handler(CommandHandler("proxy_enable", whitelist_required(proxy_enable.execute)))
 
     # Statut du système
     app.add_handler(CommandHandler("status", whitelist_required(status.execute)))

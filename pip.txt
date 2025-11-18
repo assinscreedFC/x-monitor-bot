@@ -32,8 +32,10 @@ browser = p.chromium.launch_persistent_context(
             "--disable-infobars",
             "--disable-features=IsolateOrigins,site-per-process"
         ],
-        proxy: {
-        server: 'isp:oxylabs.io',
-        username: 'bibobi',
-        password: 'Bibobibabobi134679+'},
+        proxy= {
+                'server': 'http://isp.oxylabs.io:8010',
+                'username': 'bibobi_1Qufi',
+                'password': 'Bibobibabobi134679+'},
     )
+
+

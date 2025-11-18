@@ -10,7 +10,7 @@ from core.auth import whitelist_required
 logger = logging.getLogger('TelegramBot')
 
 # Regex pour valider le format IP:PORT ou DOMAIN:PORT (sans l'authentification)
-PROXY_REGEX = re.compile(r"^(?:http|https|socks5)?://?([\w\.\-]+:\d{2,5})$", re.IGNORECASE)
+PROXY_REGEX = re.compile(r"^(?:https?://)?([\w\.\-]+:\d{2,5})$", re.IGNORECASE)
 
 
 async def _get_next_id():
