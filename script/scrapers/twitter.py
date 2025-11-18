@@ -30,7 +30,7 @@ async def _save_screenshot_safe(page: Page, prefix: str, username: str = "unknow
     """
     Essaie de prendre une capture d'écran et retourne le chemin (ou une chaîne vide si échec).
     """
-    try:
+    """try:
         timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         filename = f"{username}_{prefix}_{timestamp}.png"
         path = SCREENSHOTS_DIR / filename
@@ -38,8 +38,8 @@ async def _save_screenshot_safe(page: Page, prefix: str, username: str = "unknow
         logger.info(f"[Screenshot] Sauvegardé: {path}")
         return str(path)
     except Exception as e:
-        logger.error(f"[Screenshot] Échec lors de la capture ({prefix}): {e}")
-        return ""
+        logger.error(f"[Screenshot] Échec lors de la capture ({prefix}): {e}")"""
+    return ""
 
 
 async def smooth_scroll(page: Page, distance: int = 3000, steps: int = 15, delay_min: float = 0.1,

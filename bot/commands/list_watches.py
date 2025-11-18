@@ -1,7 +1,9 @@
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
-import asyncio # Nécessaire pour la fonction send_long_message
+import asyncio
+from telegram.constants import ParseMode  # <-- 1. IMPORTER LE BON MODE
+from telegram.helpers import escape_markdown  # <-- 2. IMPORTER L'OUTIL D'ÉCHAPPEMENT
 
 from core.json_manager import storage_manager, MONITORS_FILE
 from core.auth import whitelist_required
@@ -43,7 +45,8 @@ async def send_long_message(update: Update, text: str, parse_mode: str = None):
     for i, part in enumerate(parts):
         header = ""
         if i > 0:
-            header = f"**(Suite - Partie {i + 1}/{len(parts)})**\n"
+            # Ce header utilise MarkdownV2, donc le parse_mode doit être correct
+            header = f"**(Suite \- Partie {i + 1}/{len(parts)})**\n"
 
         await update.message.reply_text(header + part, parse_mode=parse_mode)
         # Petite pause pour éviter le flood si la liste est très longue
@@ -74,19 +77,29 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for m in monitors:
         status = "✅ ACTIF" if m.get('enabled') else "❌ INACTIF"
         links = "🔗 Oui" if m.get('include_links', True) else "🚫 Non"
+
+        # --- 3. CORRECTION DE L'ÉCHAPPEMENT ---
+
+        # On récupère les données brutes
         last_id = m.get('last_post_id', 'INIT')
 
+        # On formate les strings *avant* de les échapper
         last_status = "Nouveau (INIT)"
         if last_id and last_id != "INIT":
-            # Si c'est une date, on affiche la date de la DB
             last_status = f"Dernier post: {last_id.split('T')[0]}"
 
+        # On échappe TOUT ce qui vient du JSON
+        safe_id = escape_markdown(m['id'], version=2)
+        safe_username = escape_markdown(m['x_account'], version=2)
+        safe_chat_id = escape_markdown(str(m['telegram_chat_id']), version=2)  # str() pour être sûr
+        safe_last_status = escape_markdown(last_status, version=2)
+
         entry = (
-            f"\n--- Monitor ID: `{m['id']}` ---\n"
+            f"\n\-\-\- Monitor ID: `{safe_id}` \-\-\-\n"  # Les '-' doivent aussi être échappés !
             f"Statut: {status}\n"
-            f"Compte X: **@{m['x_account']}**\n"
-            f"Chat Cible: `{m['telegram_chat_id']}`\n"
-            f"Options: [Liens: {links}] | [{last_status}]\n"
+            f"Compte X: **@{safe_username}**\n"
+            f"Chat Cible: `{safe_chat_id}`\n"
+            f"Options: [Liens: {links}] | [{safe_last_status}]\n"
         )
         response_parts.append(entry)
 
@@ -96,5 +109,5 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await send_long_message(
         update,
         final_message,
-        parse_mode='Markdown'
+        parse_mode=ParseMode.MARKDOWN_V2  # <-- 4. UTILISER LE BON MODE
     )
