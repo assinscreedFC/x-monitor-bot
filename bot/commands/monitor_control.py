@@ -22,7 +22,7 @@ async def set_monitor_status(update: Update, context: ContextTypes.DEFAULT_TYPE,
     if not context.args or len(context.args) != 1:
         # TRADUCTION DU MESSAGE D'ERREUR D'USAGE
         await update.message.reply_text(
-            f"用法: /\{action_en}\_monitor <监控\_ID> (查看 /list\_watches)",
+            rf"用法: /\{action_en}\_monitor <监控\_ID> (查看 /list\_watches)",
             reply_markup=get_main_menu_keyboard(),  # <-- ATTACHER LE MENU
             parse_mode=ParseMode.MARKDOWN_V2
         )

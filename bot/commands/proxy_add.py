@@ -53,7 +53,7 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 1. Vérifier les arguments (TRADUCTION DE L'USAGE)
     if not context.args or len(context.args) != 1:
         await update.message.reply_text(
-            "用法: /proxy\_add <ip:port> 或 <http\:\/\/ip:port>\n"
+            r"用法: /proxy\_add <ip:port> 或 <http\:\/\/ip:port>\n"
             "用户名和密码从配置文件 (.env) 中获取。",
             parse_mode=ParseMode.MARKDOWN_V2,
             reply_markup=get_main_menu_keyboard() # <-- ATTACHER LE MENU

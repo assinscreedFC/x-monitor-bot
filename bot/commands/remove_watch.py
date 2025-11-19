@@ -20,7 +20,7 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 1. Vérifier l'usage (TRADUCTION)
     if not context.args or len(context.args) != 1:
         await update.message.reply_text(
-            "用法: /remove\_watch <监控\_ID> (使用 /list\_watches 查看 ID)",
+            r"用法: /remove\_watch <监控\_ID> (使用 /list\_watches 查看 ID)",
             parse_mode=ParseMode.MARKDOWN_V2,
             reply_markup=get_main_menu_keyboard()  # <-- ATTACHER LE MENU
         )

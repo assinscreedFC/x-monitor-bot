@@ -27,8 +27,7 @@ async def _set_proxy_status(proxy_id: int, status: bool) -> (bool, str):
 
     if proxy_index is None:
         # TRADUCTION DE L'ERREUR NON TROUVÉ
-        return False, f"Proxy ID `{safe_proxy_id}` 未找到 (Non trouvé)\."
-
+        return False, rf"Proxy ID `{safe_proxy_id}` 未找到 (Non trouvé)\."
     # Mise à jour de l'état
     proxies[proxy_index]['active'] = status
     proxies[proxy_index]['error_count'] = NEW_ERROR_COUNT
@@ -51,7 +50,7 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 1. Vérifier l'usage (TRADUCTION)
     if not context.args or len(context.args) != 1:
         await update.message.reply_text(
-            "用法: /proxy\_enable <代理\_ID> (使用 /proxy\_list 查看 ID)",
+            r"用法: /proxy\_enable <代理\_ID> (使用 /proxy\_list 查看 ID)",
             parse_mode=ParseMode.MARKDOWN_V2,
             reply_markup=get_main_menu_keyboard()  # <-- ATTACHER LE MENU
         )

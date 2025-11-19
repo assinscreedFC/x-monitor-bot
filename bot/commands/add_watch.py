@@ -38,8 +38,8 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 1. Valider les arguments
     if not context.args or len(context.args) < 2:
         await update.message.reply_text(
-            "用法: /add_watch <@X账户> <ChatID> [inclure\_liens: true/false]\n"
-            "示例: /add_watch @NASA \-100123456789 true",
+            r"用法: /add_watch <@X账户> <ChatID> [inclure\_liens: true/false]\n"
+    r"示例: /add_watch @NASA \-100123456789 true",
             reply_markup=get_main_menu_keyboard(),  # <-- 3. ATTACHER LE MENU
             parse_mode=ParseMode.MARKDOWN_V2
         )
@@ -60,7 +60,7 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             # Message d'erreur non valide
             await update.message.reply_text(
-                "⚠️ 'inclure\_liens' 参数无效。请使用 'true' 或 'false'\.",
+                r"⚠️ 'inclure\_liens' 参数无效。请使用 'true' 或 'false'\.",
                 reply_markup=get_main_menu_keyboard(),  # <-- ATTACHER LE MENU
                 parse_mode=ParseMode.MARKDOWN_V2
             )

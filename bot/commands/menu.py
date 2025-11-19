@@ -82,10 +82,10 @@ def get_admin_menu_keyboard():
 # --- Textes des menus (MIS À JOUR) ---
 MAIN_MENU_TEXT = "你好！欢迎使用X监控机器人。\n\n请从下方选择一个类别："
 
-MONITORS_MENU_TEXT = "📊 **监控管理**\n\n请选择操作，或使用 /add\_watch, /remove\_watch 等命令直接输入参数。"
-PROXIES_MENU_TEXT = "🛡️ **代理管理**\n\n请选择操作，或使用 /proxy\_add, /proxy\_remove 等命令直接输入参数。"
-ADMIN_MENU_TEXT = "🔑 **管理员设置**\n\n请选择操作，或使用 /whitelist\_add, /status 等命令直接输入参数。"
-
+# MODIFIER :
+MONITORS_MENU_TEXT = r"📊 **监控管理**\n\n请选择操作，或使用 /add\_watch, /remove\_watch 等命令直接输入参数。"
+PROXIES_MENU_TEXT = r"🛡️ **代理管理**\n\n请选择操作，或使用 /proxy\_add, /proxy\_remove 等命令直接输入参数。"
+ADMIN_MENU_TEXT = r"🔑 **管理员设置**\n\n请选择操作，或使用 /whitelist\_add, /status 等命令直接输入参数。"
 
 # --- GESTIONNAIRES (HANDLERS) ---
 

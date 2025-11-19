@@ -69,8 +69,8 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Le demandeur doit avoir un username pour l'ajout automatique
         if not target_username:
             await update.message.reply_text(
-                "用法: /whitelist\_add <Telegram 用户 ID> 或 `@username`\n"
-                "**注意:** 如果没有提供参数, 您必须先设置一个 Telegram 用户名才能使用此命令\.",
+                r"用法: /whitelist\_add <Telegram 用户 ID> 或 `@username`\n"
+    r"**注意:** 如果没有提供参数, 您必须先设置一个 Telegram 用户名才能使用此命令\.",
                 parse_mode=ParseMode.MARKDOWN_V2,
                 reply_markup=get_main_menu_keyboard()
             )

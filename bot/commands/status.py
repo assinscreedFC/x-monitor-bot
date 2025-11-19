@@ -95,8 +95,7 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Erreur lors de la récupération du statut: {e}")
         # Échapper l'erreur pour le message Telegram
         safe_error = escape_markdown(str(e), version=2)
-        response_parts.append(f"🛑 **系统错误:** 读取文件时出现问题 \({safe_error}\)")  # <-- TRADUCTION
-
+        response_parts.append(rf"🛑 **系统错误:** 读取文件时出现问题 \({safe_error}\)")
     final_message = "\n".join(response_parts)
 
     # Utilisation de la nouvelle fonction pour gérer le découpage et le menu

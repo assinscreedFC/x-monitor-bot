@@ -20,7 +20,7 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 1. Vérification de l'usage (TRADUCTION)
     if not context.args:
         await update.message.reply_text(
-            "用法: /whitelist\_remove <Telegram 用户 ID>",
+            r"用法: /whitelist\_remove <Telegram 用户 ID>",
             parse_mode=ParseMode.MARKDOWN_V2,
             reply_markup=get_main_menu_keyboard()  # <-- ATTACHER LE MENU
         )
