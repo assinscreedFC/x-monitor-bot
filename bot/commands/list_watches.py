@@ -21,7 +21,7 @@ async def send_long_message(update: Update, text: str, parse_mode: str = None):
     Le clavier principal est attaché à la dernière partie.
     """
 
-    # Découpage du message (Logique inchangée)
+    # Découpage du message
     parts = []
     current_part = ""
     lines = text.split('\n')
@@ -44,8 +44,9 @@ async def send_long_message(update: Update, text: str, parse_mode: str = None):
             reply_markup = get_main_menu_keyboard()
 
         if i > 0:
-            # FIX FINAL DANS LE HEADER (Doit être correct maintenant)
+            # FIX FINAL HEADER : Utilisation de crochets échappés \[ ... \] au lieu de parenthèses
             header = rf"\[继续 \- 第 {i + 1}/{len(parts)} 部分\]\n"
+
         await update.message.reply_text(header + part, parse_mode=parse_mode, reply_markup=reply_markup)
 
         if len(parts) > 2:
@@ -62,9 +63,12 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         monitors = await storage_manager.read_data(MONITORS_FILE)
     except Exception as e:
+        # Protection du message d'erreur
+        safe_error = escape_markdown(str(e), version=2)
         await update.message.reply_text(
-            f"⛔ 读取监控时发生错误: {e}",
-            reply_markup=get_main_menu_keyboard()
+            rf"⛔ 读取监控时发生错误: {safe_error}",
+            reply_markup=get_main_menu_keyboard(),
+            parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
@@ -79,34 +83,34 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     response_parts = ["📌 **监控列表 (启用/禁用)**\n"]
 
     for m in monitors:
-        # TRADUCTION DES STATUTS EN CHAÎNES BRUTES (SANS CARACTÈRES RÉSERVÉS)
+        # TRADUCTION DES STATUTS (Texte brut sans caractères spéciaux)
         status_raw = "✅ 启用" if m.get('enabled') else "❌ 禁用"
-        # FIX : Supprimer le texte Français entre parenthèses et les parenthèses elles-mêmes
         links_raw = "🔗 是" if m.get('include_links', True) else "🚫 否"
 
         last_id = m.get('last_post_id', 'INIT')
-        last_status_raw = "新监控 (INIT)" # Cette parenthèse doit être échappée
+
+        # FIX CRITIQUE ICI : Remplacement de "(INIT)" par "- INIT" pour supprimer les parenthèses
+        last_status_raw = "新监控 - INIT"
+
         if last_id and last_id != "INIT":
+            # On sépare par un espace simple, pas de caractères spéciaux
             last_status_raw = f"最后帖子日期: {last_id.split('T')[0]}"
 
-        # --- 1. ÉCHAPPEMENT DES VARIABLES (OBLIGATOIRE) ---
+        # --- 1. ÉCHAPPEMENT DES VARIABLES ---
         safe_id = escape_markdown(str(m['id']), version=2)
         safe_username = escape_markdown(m['x_account'], version=2)
         safe_chat_id = escape_markdown(str(m['telegram_chat_id']), version=2)
 
-        # --- 2. ÉCHAPPEMENT DES TEXTES DE TRADUCTION FIXES (OBLIGATOIRE) ---
-        # Si le texte contient des parenthèses ou autres caractères réservés.
+        # --- 2. ÉCHAPPEMENT DES TEXTES ---
         safe_links = escape_markdown(links_raw, version=2)
-        # FIX : Échapper la parenthèse du "(INIT)" qui est un caractère réservé
         safe_last_status = escape_markdown(last_status_raw, version=2)
 
-        # TRADUCTION DE L'ENTRY (Assemblage)
+        # TRADUCTION DE L'ENTRY (Assemblage avec raw string)
         entry = (
             rf"\n\-\-\- 监控 ID: `{safe_id}` \-\-\-\n"
             f"状态: {status_raw}\n"
             f"X 账户: **@{safe_username}**\n"
             f"目标群组 Chat: `{safe_chat_id}`\n"
-            # Utiliser les variables safe_* pour les options
             rf"选项: \[链接: {safe_links}\] \| \[{safe_last_status}\]\n"
         )
         response_parts.append(entry)
