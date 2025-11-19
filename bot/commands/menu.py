@@ -38,9 +38,10 @@ def get_monitors_menu_keyboard():
         [
             InlineKeyboardButton("❌ 删除监控 (/remove_watch)", callback_data="act_remove_watch"),
         ],
+        # Les commandes de contrôle nécessitent un ID, donc on les traite comme des commandes à argument
         [
-            InlineKeyboardButton("▶️ 启动调度器 (/start_monitor)", callback_data="act_start_monitor"),
-            InlineKeyboardButton("⏸️ 停止调度器 (/stop_monitor)", callback_data="act_stop_monitor"),
+            InlineKeyboardButton("▶️ 启动监控 (/start_monitor)", callback_data="act_start_monitor"),
+            InlineKeyboardButton("⏸️ Arrêter surveillance (/stop_monitor)", callback_data="act_stop_monitor"),
         ],
         [InlineKeyboardButton("« 返回主菜单 (Retour Menu Principal)", callback_data="nav_main")]
     ]
@@ -79,24 +80,16 @@ def get_admin_menu_keyboard():
     return InlineKeyboardMarkup(keyboard)
 
 
-# --- Textes des menus (MIS À JOUR) ---
+# --- Textes des menus ---
 MAIN_MENU_TEXT = "你好！欢迎使用X监控机器人。\n\n请从下方选择一个类别："
 
-# MODIFIER :
-MONITORS_MENU_TEXT = r"📊 **监控管理**\n\n请选择操作，或使用 /add\_watch, /remove\_watch 等命令直接输入参数。"
-PROXIES_MENU_TEXT = r"🛡️ **代理管理**\n\n请选择操作，或使用 /proxy\_add, /proxy\_remove 等命令直接输入参数。"
-ADMIN_MENU_TEXT = r"🔑 **管理员设置**\n\n请选择操作，或使用 /whitelist\_add, /status 等命令直接输入参数。"
+# Correction pour éviter les SyntaxWarnings
+MONITORS_MENU_TEXT = rf"📊 **监控管理**\n\n请选择操作，或使用 /add\_watch, /remove\_watch 等命令直接输入参数。"
+PROXIES_MENU_TEXT = rf"🛡️ **代理管理**\n\n请选择操作，或使用 /proxy\_add, /proxy\_remove 等命令直接输入参数。"
+ADMIN_MENU_TEXT = rf"🔑 **管理员设置**\n\n请选择操作，或使用 /whitelist\_add, /status 等命令直接输入参数。"
 
-# --- GESTIONNAIRES (HANDLERS) ---
 
-@whitelist_required
-async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Affiche le menu principal (pour /start ou /menu)."""
-    await update.message.reply_text(
-        MAIN_MENU_TEXT,
-        reply_markup=get_main_menu_keyboard()
-    )
-
+# --- FONCTIONS UTILITAIRES ---
 
 def get_usage_text(action: str) -> str:
     """Retourne le texte d'aide basé sur l'action."""
@@ -113,35 +106,37 @@ def get_usage_text(action: str) -> str:
     elif action == "act_proxy_list":
         return rf"📡 查看代理列表：\n\n请直接发送命令：`/proxy_list`"
 
+    # --- COMMANDES AVEC ARGUMENTS ---
     elif action == "act_add_watch":
         return (
             rf"➕ **添加监控**\n\n请发送以下命令格式：\n"
             rf"`/add_watch <X账户> <ChatID>`\n"
             rf"**示例:** `/add_watch elonmusk -100123456789`"
         )
-
     elif action == "act_remove_watch":
         return (
             rf"❌ **删除监控**\n\n请发送以下命令格式：\n"
             rf"`/remove_watch <监控 ID>`\n"
             rf"**示例:** `/remove_watch 123`"
         )
+    elif action == "act_start_monitor":
+        return rf"▶️ **启动监控**\n\n请发送以下命令格式：\n\n`/start_monitor <监控 ID>`"
 
-    # --- PROXIES ---
+    elif action == "act_stop_monitor":
+        return rf"⏸️ **停止监控**\n\n请发送以下命令格式：\n\n`/stop_monitor <监控 ID>`"
+
     elif action == "act_proxy_add":
         return (
             rf"➕ **添加代理**\n\n请发送以下命令格式：\n"
             rf"`/proxy_add <ip:port>`\n"
             rf"**示例:** `/proxy_add 1.2.3.4:8080`"
         )
-
     elif action == "act_proxy_remove":
         return rf"❌ **删除代理**\n\n请发送以下命令格式：\n\n`/proxy_remove <代理 ID>`"
 
     elif action == "act_proxy_enable":
         return rf"🔄 **启用代理**\n\n请发送以下命令格式：\n\n`/proxy_enable <代理 ID>`"
 
-    # --- ADMIN ---
     elif action == "act_whitelist_add":
         return rf"➕ **添加管理员**\n\n请发送以下命令格式：\n\n`/whitelist_add <用户 ID>`"
 
@@ -149,6 +144,15 @@ def get_usage_text(action: str) -> str:
         return rf"❌ **删除管理员**\n\n请发送以下命令格式：\n\n`/whitelist_remove <用户 ID>`"
 
     return "错误：未知的操作。"
+
+
+@whitelist_required
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Affiche le menu principal (pour /start ou /menu)."""
+    await update.message.reply_text(
+        MAIN_MENU_TEXT,
+        reply_markup=get_main_menu_keyboard()
+    )
 
 
 @whitelist_required
@@ -180,16 +184,17 @@ async def button_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = get_admin_menu_keyboard()
 
     # --- EXECUTION D'ACTIONS (act_...) ---
-    # Cette partie résout le problème de l'exécution et des arguments.
 
     elif data.startswith("act_"):
 
-        # 1. Obtenir le texte d'aide et le clavier approprié
+        action_type = data.split('_')[1]
+
+        # 1. Obtenir le texte d'aide
         text = get_usage_text(data)
 
-        if data in ["act_list_watches", "act_status", "act_worker_status", "act_proxy_list"]:
-            # Commandes sans arguments : On simule l'envoi de la commande dans la discussion
-            # La solution la plus propre est d'envoyer la commande dans le chat
+        # 2. Déterminer le clavier de retour (pour les commandes à argument)
+        if action_type in ["list", "status", "worker"]:
+            # Commandes SANS arguments : on simule l'envoi de la commande
 
             cmd_name = data.replace('act_', '/')
 
@@ -202,19 +207,19 @@ async def button_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Envoi de la commande au chat pour que le CommandHandler le reçoive
             await query.message.reply_text(cmd_name)
 
-            # Le bot va ensuite répondre avec le résultat + le menu principal (grâce au code corrigé précédemment)
             return
 
         else:
-            # Commandes avec arguments : Affiche le format d'usage et retourne au sous-menu
+            # Commandes AVEC arguments : affiche le format d'usage et retourne au sous-menu
 
-            if data in ["act_add_watch", "act_remove_watch", "act_start_monitor", "act_stop_monitor"]:
+            if action_type in ["add", "remove", "start", "stop"]:
                 keyboard = get_monitors_menu_keyboard()
-            elif data in ["act_proxy_add", "act_proxy_remove", "act_proxy_enable"]:
+            elif action_type in ["proxy", "enable"]:
                 keyboard = get_proxies_menu_keyboard()
-            elif data in ["act_whitelist_add", "act_whitelist_remove"]:
+            elif action_type in ["whitelist"]:
                 keyboard = get_admin_menu_keyboard()
 
+            # Pas de 'return' ici, on passe à l'édition du message ci-dessous
 
     else:
         # Message par défaut si callback_data inconnu
