@@ -1,5 +1,6 @@
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 from core.auth import whitelist_required
+# --- IMPORTS DES COMMANDES ---
 from .commands import start
 from .commands import help
 from .commands import add_watch
@@ -14,6 +15,18 @@ from .commands import proxy_list
 from .commands import proxy_remove
 from .commands import proxy_enable
 from .commands import menu
+from .commands import worker_status  # AJOUT DE L'IMPORT MANQUANT
+
+# --- MAPPAGE DES FONCTIONS POUR L'APPEL DIRECT (COMMANDES SIMPLES) ---
+# Ces fonctions sont appelées directement par le menu.py, sans passer par CommandHandler.
+COMMAND_MAP = {
+    "list_watches": list_watches.execute,
+    "status": status.execute,
+    "worker_status": worker_status.execute,
+    "proxy_list": proxy_list.execute,
+    "help": help.execute,  # <-- AJOUT : help sans argument est simple
+    "start": start.execute,  # <-- AJOUT : start sans argument est simple
+}
 
 
 def register_handlers(app: Application):
@@ -21,7 +34,12 @@ def register_handlers(app: Application):
     Attache tous les gestionnaires de commandes à l'application bot.
     """
 
+    # 1. STOCKER L'ANNUAIRE DE FONCTIONS DANS app.bot_data
+    # Ceci permet à menu.py d'appeler les fonctions directement
+    app.bot_data['command_map'] = COMMAND_MAP
+
     # --- COMMANDES DE MENU ---
+    # Ces commandes lancent le menu interactif
     app.add_handler(CommandHandler("start", whitelist_required(menu.start_command)))
     app.add_handler(CommandHandler("menu", whitelist_required(menu.start_command)))
 

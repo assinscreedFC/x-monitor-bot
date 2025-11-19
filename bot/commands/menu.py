@@ -3,7 +3,8 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from core.auth import whitelist_required
-import time  # <-- Ajout de l'import pour le timestamp de rafraîchissement
+import time  # Nécessaire pour forcer le rafraîchissement du menu
+from telegram import Update  # Nécessaire pour la simulation d'objet Update
 
 logger = logging.getLogger('TelegramBot')
 
@@ -189,33 +190,37 @@ async def button_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data.startswith("act_"):
 
-        # 1. Obtenir le texte d'aide
-        text = get_usage_text(data)
+        cmd_name = data.replace('act_', '')
+        handler_func = context.bot_data.get('command_map', {}).get(cmd_name)
 
-        if data in ["act_list_watches", "act_status", "act_worker_status", "act_proxy_list"]:
-            # Commandes sans arguments : On simule l'envoi de la commande
-
-            cmd_name = data.replace('act_', '/')
+        if handler_func:
+            # --- APPEL DIRECT DE LA FONCTION (Pour les commandes sans argument) ---
 
             # 1. Supprimer les boutons du message original
-            try:
-                await query.edit_message_reply_markup(reply_markup=None)
-            except Exception:
-                pass
+            await query.edit_message_reply_markup(reply_markup=None)
 
-                # 2. Envoi du message pour déclencher l'action
-            await query.message.reply_text(cmd_name)
+            # 2. Créer un objet Update simulé pour la fonction execute.
+            fake_update = Update(
+                update_id=update.update_id,
+                message=query.message,  # Utilise le message qui contient le bouton
+            )
 
-            return  # Fin de l'interaction pour cette action
+            # 3. Exécuter la fonction de commande directement (C'est le FIX !)
+            await handler_func(fake_update, context)
+
+            return  # Le handler_func s'est exécuté et a affiché le résultat + le menu.
 
         else:
             # Commandes AVEC arguments : Affiche le format d'usage et retourne au sous-menu
 
-            if data in ["act_add_watch", "act_remove_watch", "act_start_monitor", "act_stop_monitor"]:
+            text = get_usage_text(data)
+
+            # Déterminer le clavier de retour
+            if cmd_name in ["add_watch", "remove_watch", "start_monitor", "stop_monitor"]:
                 keyboard = get_monitors_menu_keyboard()
-            elif data in ["act_proxy_add", "act_proxy_remove", "act_proxy_enable"]:
+            elif cmd_name in ["proxy_add", "proxy_remove", "proxy_enable"]:
                 keyboard = get_proxies_menu_keyboard()
-            elif data in ["act_whitelist_add", "act_whitelist_remove"]:
+            elif cmd_name in ["whitelist_add", "whitelist_remove"]:
                 keyboard = get_admin_menu_keyboard()
 
             # Pas de 'return' ici, on passe à l'édition du message ci-dessous
@@ -235,7 +240,7 @@ async def button_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     except Exception as e:
         logger.warning(f"Erreur lors de l'édition du message (menu) : {e}")
-        # Si l'édition échoue (message trop vieux), on envoie un nouveau message
+        # Si l'édition échoue, on envoie un nouveau message
         await query.message.reply_text(
             text=text,
             reply_markup=keyboard,
