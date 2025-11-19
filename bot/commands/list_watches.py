@@ -4,7 +4,7 @@ from telegram.ext import ContextTypes
 import asyncio
 from telegram.constants import ParseMode
 from telegram.helpers import escape_markdown
-from .menu import get_main_menu_keyboard  # <-- 1. IMPORTER LE CLAVIER PRINCIPAL
+from .menu import get_main_menu_keyboard  # <-- IMPORTER LE CLAVIER PRINCIPAL
 
 from core.json_manager import storage_manager, MONITORS_FILE
 from core.auth import whitelist_required
@@ -21,11 +21,9 @@ async def send_long_message(update: Update, text: str, parse_mode: str = None):
     Le clavier principal est attaché à la dernière partie.
     """
 
-    # Découpage du message
+    # Découpage du message (Logique inchangée)
     parts = []
     current_part = ""
-
-    # Tentative de découper par lignes pour ne pas couper au milieu d'un moniteur
     lines = text.split('\n')
 
     for line in lines:
@@ -41,18 +39,16 @@ async def send_long_message(update: Update, text: str, parse_mode: str = None):
     # Envoi de chaque partie
     for i, part in enumerate(parts):
         header = ""
-        # On attache le menu SEULEMENT au *dernier* message.
         reply_markup = None
         if i == len(parts) - 1:
-            reply_markup = get_main_menu_keyboard()  # <-- ATTACHER LE CLAVIER FINAL
+            reply_markup = get_main_menu_keyboard()
 
         if i > 0:
-            # FIX FINAL : Échapper les deux parenthèses dans le header.
+            # FIX FINAL DANS LE HEADER (Doit être correct maintenant)
             header = rf"**\(继续 \- 第 {i + 1}/{len(parts)} 部分\)**\n"
 
         await update.message.reply_text(header + part, parse_mode=parse_mode, reply_markup=reply_markup)
 
-        # Petite pause pour éviter le flood si la liste est très longue
         if len(parts) > 2:
             await asyncio.sleep(0.5)
 
@@ -84,12 +80,13 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     response_parts = ["📌 **监控列表 (启用/禁用)**\n"]
 
     for m in monitors:
-        # TRADUCTION DES STATUTS EN CHAÎNES BRUTES (SANS ÉCHAPPEMENT)
+        # TRADUCTION DES STATUTS EN CHAÎNES BRUTES (SANS CARACTÈRES RÉSERVÉS)
         status_raw = "✅ 启用" if m.get('enabled') else "❌ 禁用"
-        links_raw = "🔗 是 (Oui)" if m.get('include_links', True) else "🚫 否 (Non)"
+        # FIX : Supprimer le texte Français entre parenthèses et les parenthèses elles-mêmes
+        links_raw = "🔗 是" if m.get('include_links', True) else "🚫 否"
 
         last_id = m.get('last_post_id', 'INIT')
-        last_status_raw = "新监控 (INIT)"
+        last_status_raw = "新监控 (INIT)" # Cette parenthèse doit être échappée
         if last_id and last_id != "INIT":
             last_status_raw = f"最后帖子日期: {last_id.split('T')[0]}"
 
@@ -101,6 +98,7 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # --- 2. ÉCHAPPEMENT DES TEXTES DE TRADUCTION FIXES (OBLIGATOIRE) ---
         # Si le texte contient des parenthèses ou autres caractères réservés.
         safe_links = escape_markdown(links_raw, version=2)
+        # FIX : Échapper la parenthèse du "(INIT)" qui est un caractère réservé
         safe_last_status = escape_markdown(last_status_raw, version=2)
 
         # TRADUCTION DE L'ENTRY (Assemblage)
