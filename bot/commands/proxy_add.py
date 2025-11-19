@@ -53,8 +53,8 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 1. Vérifier les arguments (TRADUCTION DE L'USAGE)
     if not context.args or len(context.args) != 1:
         await update.message.reply_text(
-            r"用法: /proxy\_add <ip:port> 或 <http\:\/\/ip:port>\n"
-            "用户名和密码从配置文件 (.env) 中获取。",
+            rf"⛔ 代理格式无效。请使用 `ip:port` 或 `http://ip:port` 格式\."
+    rf" 请勿在此处包含用户名和密码 \(它们在 \.env 文件中\)\.",
             parse_mode=ParseMode.MARKDOWN_V2,
             reply_markup=get_main_menu_keyboard() # <-- ATTACHER LE MENU
         )
