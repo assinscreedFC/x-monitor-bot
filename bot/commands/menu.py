@@ -3,6 +3,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from core.auth import whitelist_required
+import time  # <-- Ajout de l'import pour le timestamp de rafraîchissement
 
 logger = logging.getLogger('TelegramBot')
 
@@ -38,7 +39,6 @@ def get_monitors_menu_keyboard():
         [
             InlineKeyboardButton("❌ 删除监控 (/remove_watch)", callback_data="act_remove_watch"),
         ],
-        # Les commandes de contrôle nécessitent un ID, donc on les traite comme des commandes à argument
         [
             InlineKeyboardButton("▶️ 启动监控 (/start_monitor)", callback_data="act_start_monitor"),
             InlineKeyboardButton("⏸️ Arrêter surveillance (/stop_monitor)", callback_data="act_stop_monitor"),
@@ -89,7 +89,7 @@ PROXIES_MENU_TEXT = rf"🛡️ **代理管理**\n\n请选择操作，或使用 /
 ADMIN_MENU_TEXT = rf"🔑 **管理员设置**\n\n请选择操作，或使用 /whitelist\_add, /status 等命令直接输入参数。"
 
 
-# --- FONCTIONS UTILITAIRES ---
+# --- FONCTIONS UTILITAIRES D'USAGE ---
 
 def get_usage_text(action: str) -> str:
     """Retourne le texte d'aide basé sur l'action."""
@@ -171,7 +171,9 @@ async def button_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # --- NAVIGATION ENTRE MENUS (nav_...) ---
 
     if data == "nav_main":
-        text = MAIN_MENU_TEXT
+        # Force l'édition pour éviter "Message is not modified"
+        timestamp = int(time.time())
+        text = MAIN_MENU_TEXT + rf"\n`[状态更新: {timestamp}]`"  # Ajout d'un timestamp invisible
         keyboard = get_main_menu_keyboard()
     elif data == "nav_monitors":
         text = MONITORS_MENU_TEXT
@@ -187,36 +189,33 @@ async def button_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data.startswith("act_"):
 
-        action_type = data.split('_')[1]
-
         # 1. Obtenir le texte d'aide
         text = get_usage_text(data)
 
-        # 2. Déterminer le clavier de retour (pour les commandes à argument)
-        if action_type in ["list", "status", "worker"]:
-            # Commandes SANS arguments : on simule l'envoi de la commande
+        if data in ["act_list_watches", "act_status", "act_worker_status", "act_proxy_list"]:
+            # Commandes sans arguments : On simule l'envoi de la commande
 
             cmd_name = data.replace('act_', '/')
 
-            # Modifier le message pour avertir l'utilisateur
-            await query.edit_message_text(
-                text=rf"🚀 正在运行 {cmd_name}...",
-                reply_markup=None  # Retire le clavier
-            )
+            # 1. Supprimer les boutons du message original
+            try:
+                await query.edit_message_reply_markup(reply_markup=None)
+            except Exception:
+                pass
 
-            # Envoi de la commande au chat pour que le CommandHandler le reçoive
+                # 2. Envoi du message pour déclencher l'action
             await query.message.reply_text(cmd_name)
 
-            return
+            return  # Fin de l'interaction pour cette action
 
         else:
-            # Commandes AVEC arguments : affiche le format d'usage et retourne au sous-menu
+            # Commandes AVEC arguments : Affiche le format d'usage et retourne au sous-menu
 
-            if action_type in ["add", "remove", "start", "stop"]:
+            if data in ["act_add_watch", "act_remove_watch", "act_start_monitor", "act_stop_monitor"]:
                 keyboard = get_monitors_menu_keyboard()
-            elif action_type in ["proxy", "enable"]:
+            elif data in ["act_proxy_add", "act_proxy_remove", "act_proxy_enable"]:
                 keyboard = get_proxies_menu_keyboard()
-            elif action_type in ["whitelist"]:
+            elif data in ["act_whitelist_add", "act_whitelist_remove"]:
                 keyboard = get_admin_menu_keyboard()
 
             # Pas de 'return' ici, on passe à l'édition du message ci-dessous
