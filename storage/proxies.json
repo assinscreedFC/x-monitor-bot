@@ -1,9 +1,72 @@
 [
   {
     "id": 1,
-    "proxy_url": "http://isp.oxylabs.io:8010",
+    "proxy_url": "http://82.23.127.99:8010",
     "active": true,
     "error_count": 0,
-    "last_used": "2025-11-18T18:11:45Z"
+    "last_used": "2025-11-19T20:55:53Z"
+  },
+  {
+    "id": 2,
+    "proxy_url": "http://82.23.127.204:8009",
+    "active": true,
+    "error_count": 0,
+    "last_used": "2025-11-19T20:59:06Z"
+  },
+  {
+    "id": 3,
+    "proxy_url": "http://82.23.124.179:8008",
+    "active": true,
+    "error_count": 0,
+    "last_used": "2025-11-19T21:03:24Z"
+  },
+  {
+    "id": 4,
+    "proxy_url": "http://82.23.118.163:8007",
+    "active": true,
+    "error_count": 0,
+    "last_used": "2025-11-19T21:09:09Z"
+  },
+  {
+    "id": 5,
+    "proxy_url": "http://82.23.117.30:8006",
+    "active": true,
+    "error_count": 0,
+    "last_used": "2025-11-19T21:13:49Z"
+  },
+  {
+    "id": 6,
+    "proxy_url": "http://82.23.117.14:8005",
+    "active": true,
+    "error_count": 0,
+    "last_used": "2025-11-19T21:17:17Z"
+  },
+  {
+    "id": 7,
+    "proxy_url": "http://82.23.125.32:8004",
+    "active": true,
+    "error_count": 0,
+    "last_used": "2025-11-19T21:20:18Z"
+  },
+  {
+    "id": 8,
+    "proxy_url": "http://82.23.125.217:8003",
+    "active": true,
+    "error_count": 0,
+    "last_used": "2025-11-19T21:25:16Z"
+  },
+  {
+    "id": 9,
+    "proxy_url": "http://82.23.125.197:8002",
+    "active": true,
+    "error_count": 0,
+    "last_used": "2025-11-19T21:29:07Z"
+  },
+  {
+    "id": 10,
+    "proxy_url": "http://82.23.125.161:8001",
+    "active": true,
+    "error_count": 0,
+    "last_used": "2025-11-19T21:33:04Z"
   }
 ]

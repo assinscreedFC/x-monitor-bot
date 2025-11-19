@@ -5,7 +5,16 @@
     "telegram_chat_id": "-1003283599098",
     "include_links": true,
     "enabled": true,
-    "last_post_id": "2025-11-18T16:49:00.000Z",
-    "created_at": "2025-11-16T22:37:04Z"
+    "last_post_id": null,
+    "created_at": "2025-11-19T17:12:28Z"
+  },
+  {
+    "id": 2,
+    "x_account": "oxy_anis",
+    "telegram_chat_id": "-1003283599098",
+    "include_links": true,
+    "enabled": true,
+    "last_post_id": null,
+    "created_at": "2025-11-19T20:34:29Z"
   }
 ]
