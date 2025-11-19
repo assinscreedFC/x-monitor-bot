@@ -1,4 +1,4 @@
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 from core.auth import whitelist_required
 from .commands import start
 from .commands import help
@@ -13,7 +13,7 @@ from .commands import proxy_add
 from .commands import proxy_list
 from .commands import proxy_remove
 from .commands import proxy_enable  # Pour la commande /proxy_enable
-
+from .commands import menu
 
 def register_handlers(app: Application):
     """
@@ -25,8 +25,9 @@ def register_handlers(app: Application):
     # Note: La commande /whitelist_add dans son implémentation gère
     # le cas où la liste est vide.
 
-    app.add_handler(CommandHandler("start", whitelist_required(start.execute)))
-    app.add_handler(CommandHandler("help", help.execute))  # Le décorateur est dans help.py
+    app.add_handler(CommandHandler("start",whitelist_required( menu.start_command)))
+    app.add_handler(CommandHandler("menu", whitelist_required(menu.start_command)))
+    app.add_handler(CommandHandler("help", whitelist_required(help.execute)))  # Le décorateur est dans help.py
 
     # --- COMMANDES PROTÉGÉES (AVEC DÉCORATEUR) ---
 
@@ -51,3 +52,4 @@ def register_handlers(app: Application):
 
     # Statut du système
     app.add_handler(CommandHandler("status", whitelist_required(status.execute)))
+    app.add_handler(CallbackQueryHandler(whitelist_required(menu.button_router)))

@@ -2,7 +2,10 @@ import logging
 import re
 import time
 from telegram import Update
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
+from telegram.helpers import escape_markdown
+from .menu import get_main_menu_keyboard # <-- Import du clavier principal
 
 from core.json_manager import storage_manager, PROXIES_FILE
 from core.auth import whitelist_required
@@ -18,7 +21,8 @@ async def _get_next_id():
     data = await storage_manager.read_data(PROXIES_FILE)
     if not data:
         return 1
-    return max(p.get('id', 0) for p in data) + 1
+    # Utiliser str() car .get() peut retourner None ou int, et nous voulons max sur les int
+    return max(int(p.get('id', 0)) for p in data) + 1
 
 
 async def _add_proxy_to_json(proxy_url_clean: str):
@@ -29,7 +33,7 @@ async def _add_proxy_to_json(proxy_url_clean: str):
 
     new_proxy = {
         "id": new_id,
-        "proxy_url": proxy_url_clean,  # Stocke ip:port ou http://ip:port (sans creds)
+        "proxy_url": proxy_url_clean,
         "active": True,
         "error_count": 0,
         "last_used": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -46,40 +50,55 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Ajoute un proxy à la liste de rotation.
     Usage: /proxy_add <ip:port> (l'authentification est gérée par le .env)
     """
+    # 1. Vérifier les arguments (TRADUCTION DE L'USAGE)
     if not context.args or len(context.args) != 1:
         await update.message.reply_text(
-            "Usage: /proxy_add <ip:port> ou <http://ip:port>\n"
-            "L'utilisateur et le mot de passe sont pris dans le fichier de configuration (.env)."
+            "用法: /proxy\_add <ip:port> 或 <http\:\/\/ip:port>\n"
+            "用户名和密码从配置文件 (.env) 中获取。",
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=get_main_menu_keyboard() # <-- ATTACHER LE MENU
         )
         return
 
     raw_url = context.args[0].strip()
 
-    # 1. Validation de l'URL pour s'assurer qu'elle ne contient pas l'authentification
-    # et qu'elle est au format IP:PORT ou DOMAIN:PORT
+    # 2. Validation de l'URL pour s'assurer qu'elle ne contient pas l'authentification
     match = PROXY_REGEX.match(raw_url)
 
     if not match:
+        # TRADUCTION DU MESSAGE D'ERREUR DE FORMAT
         await update.message.reply_text(
-            "⛔ Format de proxy invalide. Utilisez le format `ip:port` ou `http://ip:port`."
-            " N'incluez PAS l'utilisateur et le mot de passe ici (ils sont dans le .env)."
+            "⛔ 代理格式无效。请使用 `ip:port` 或 `http://ip:port` 格式。\n"
+            "请勿在此处包含用户名和密码 (它们在 .env 文件中)。",
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=get_main_menu_keyboard() # <-- ATTACHER LE MENU
         )
         return
 
-    # Extrait l'URL nettoyée (peut contenir le protocole ou juste l'IP:Port)
     proxy_url_clean = raw_url
 
     try:
         new_id, url_added = await _add_proxy_to_json(proxy_url_clean)
 
+        # Échapper l'URL et l'ID pour le message final
+        safe_id = escape_markdown(str(new_id), version=2)
+        safe_url = escape_markdown(url_added, version=2)
+
+        # MESSAGE DE SUCCÈS (TRADUCTION)
         await update.message.reply_text(
-            f"✅ Proxy ajouté (ID: **{new_id}**).\n"
-            f"Adresse : `{url_added}`\n"
-            f"Authentification : Utilise `PROXY_AUTH_USERNAME` du fichier .env.",
-            parse_mode='Markdown'
+            rf"✅ 代理添加成功 (ID: **{safe_id}**)\n"
+            rf"地址: `{safe_url}`\n"
+            rf"认证方式: 使用配置文件中的 `PROXY\_AUTH\_USERNAME`\.",
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=get_main_menu_keyboard() # <-- ATTACHER LE MENU
         )
         logger.info(f"Nouveau proxy ajouté (ID: {new_id}, URL: {url_added}) par {update.effective_user.username}")
 
     except Exception as e:
         logger.exception(f"Erreur lors de l'ajout du proxy: {e}")
-        await update.message.reply_text(f"Une erreur interne est survenue lors de l'ajout du proxy.")
+        # MESSAGE D'ERREUR INTERNE (TRADUCTION)
+        await update.message.reply_text(
+            "内部错误：添加代理时发生错误。",
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=get_main_menu_keyboard() # <-- ATTACHER LE MENU
+        )

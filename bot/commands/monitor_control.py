@@ -1,38 +1,60 @@
 import logging
 from telegram import Update
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from core.json_manager import storage_manager, MONITORS_FILE
 from core.auth import whitelist_required
+from telegram.helpers import escape_markdown  # Pour l'échappement des logs
+from .menu import get_main_menu_keyboard  # Pour attacher le menu
 
 logger = logging.getLogger('TelegramBot')
+
 
 async def set_monitor_status(update: Update, context: ContextTypes.DEFAULT_TYPE, should_enable: bool):
     """
     Fonction utilitaire pour démarrer ou arrêter un moniteur.
     """
-    action = "démarrer" if should_enable else "arrêter"
+    # TRADUCTION DE L'ACTION
+    action_zh = "启动" if should_enable else "停止"
+    action_en = "démarrer" if should_enable else "arrêter"
 
+    # 1. Vérifier les arguments
     if not context.args or len(context.args) != 1:
-        await update.message.reply_text(f"Usage: /{action}_monitor <ID_du_moniteur> (Voir /list_watches)")
+        # TRADUCTION DU MESSAGE D'ERREUR D'USAGE
+        await update.message.reply_text(
+            f"用法: /\{action_en}\_monitor <监控\_ID> (查看 /list\_watches)",
+            reply_markup=get_main_menu_keyboard(),  # <-- ATTACHER LE MENU
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
         return
 
     try:
         target_id = int(context.args[0])
+        safe_id = escape_markdown(str(target_id), version=2)  # Échapper l'ID pour le message final
     except ValueError:
-        # Correction de l'encodage
-        await update.message.reply_text("⛔ L'ID doit être un nombre entier.")
+        # TRADUCTION DU MESSAGE D'ERREUR DE VALEUR
+        await update.message.reply_text(
+            "⛔ 监控 ID 必须是一个整数。",
+            reply_markup=get_main_menu_keyboard(),  # <-- ATTACHER LE MENU
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
         return
 
+    # 2. Lire et modifier
     monitors = await storage_manager.read_data(MONITORS_FILE)
     found = False
 
     for m in monitors:
         if m.get('id') == target_id:
             if m.get('enabled') == should_enable:
-                # Si l'état est déjà le bon
-                status_text = "déjà actif" if should_enable else "déjà inactif"
-                # Correction de l'encodage
-                await update.message.reply_text(f"⚠️ Le moniteur ID `{target_id}` est {status_text}.")
+                # TRADUCTION DU MESSAGE DE STATUT DÉJÀ EXISTANT
+                status_text_zh = "已启用" if should_enable else "已停止"
+
+                await update.message.reply_text(
+                    rf"⚠️ 监控 ID `{safe_id}` 状态已经是 {status_text_zh}\.",
+                    reply_markup=get_main_menu_keyboard(),  # <-- ATTACHER LE MENU
+                    parse_mode=ParseMode.MARKDOWN_V2
+                )
                 return
 
             # Modifier l'état
@@ -41,14 +63,27 @@ async def set_monitor_status(update: Update, context: ContextTypes.DEFAULT_TYPE,
             break
 
     if not found:
-        await update.message.reply_text(f"⚠️ Moniteur ID `{target_id}` non trouvé.")
+        # TRADUCTION DU MESSAGE D'ERREUR NON TROUVÉ
+        await update.message.reply_text(
+            rf"⚠️ 监控 ID `{safe_id}` 未找到\.",
+            reply_markup=get_main_menu_keyboard(),  # <-- ATTACHER LE MENU
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
         return
 
-    # Sauvegarder et informer
+    # 3. Sauvegarder et informer
     await storage_manager.write_data(MONITORS_FILE, monitors)
-    status_text = "Activé (Démarrera au prochain cycle)" if should_enable else "Désactivé"
-    logger.info(f"Moniteur ID {target_id} {action} par {update.effective_user.username}")
-    await update.message.reply_text(f"✅ Moniteur ID **`{target_id}`** {status_text}.")
+
+    # TRADUCTION DU MESSAGE DE SUCCÈS
+    status_text_zh = "已启用 (将在下一个周期开始)" if should_enable else "已停止"
+
+    logger.info(f"Moniteur ID {target_id} {action_en} par {update.effective_user.username}")
+
+    await update.message.reply_text(
+        rf"✅ 监控 ID **`{safe_id}`** {status_text_zh}\.",
+        reply_markup=get_main_menu_keyboard(),  # <-- ATTACHER LE MENU
+        parse_mode=ParseMode.MARKDOWN_V2
+    )
 
 
 @whitelist_required

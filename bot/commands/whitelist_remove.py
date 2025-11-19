@@ -1,6 +1,9 @@
 import logging
 from telegram import Update
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
+from telegram.helpers import escape_markdown
+from .menu import get_main_menu_keyboard  # <-- Import du clavier principal
 
 from core.json_manager import storage_manager, WHITELIST_FILE
 from core.auth import whitelist_required
@@ -14,22 +17,32 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Retire un utilisateur de la whitelist.
     Usage: /whitelist_remove <user_id>
     """
+    # 1. Vérification de l'usage (TRADUCTION)
     if not context.args:
-        await update.message.reply_text("Usage: /whitelist_remove <ID_utilisateur_Telegram>")
+        await update.message.reply_text(
+            "用法: /whitelist\_remove <Telegram 用户 ID>",
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=get_main_menu_keyboard()  # <-- ATTACHER LE MENU
+        )
         return
 
+    # 2. Validation de l'ID
     try:
         # L'ID doit être un nombre entier
         target_id = int(context.args[0])
+        safe_id = escape_markdown(str(target_id), version=2)  # Échapper l'ID pour les messages
     except ValueError:
-        # Correction de l'encodage
-        await update.message.reply_text("⛔ L'ID utilisateur doit être un nombre entier.")
+        # TRADUCTION DE L'ERREUR DE VALEUR
+        await update.message.reply_text(
+            "⛔ 用户 ID 必须是一个整数。",
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=get_main_menu_keyboard()  # <-- ATTACHER LE MENU
+        )
         return
 
-    # Empêcher l'utilisateur de se retirer lui-même s'il est le dernier admin
     user_id = update.effective_user.id
 
-    # Lecture des données
+    # 3. Lecture des données
     whitelist = await storage_manager.read_data(WHITELIST_FILE)
 
     # Crée une nouvelle liste sans l'utilisateur ciblé
@@ -39,15 +52,21 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     removed_count = len(whitelist) - len(new_whitelist)
 
     if removed_count == 0:
-        # Correction de l'encodage
-        await update.message.reply_text(f"⚠️ Aucun utilisateur trouvé avec l'ID {target_id} dans la whitelist.")
+        # TRADUCTION : Aucun utilisateur trouvé
+        await update.message.reply_text(
+            rf"⚠️ 白名单中未找到 ID 为 `{safe_id}` 的用户。",
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=get_main_menu_keyboard()  # <-- ATTACHER LE MENU
+        )
         return
 
     # Vérification critique : Empêcher de retirer le dernier admin
     if len(new_whitelist) == 0:
-        # Correction de l'encodage
+        # TRADUCTION : Impossible de retirer le dernier administrateur
         await update.message.reply_text(
-            f"🚫 Impossible de retirer l'utilisateur ID {target_id}. Le retrait du dernier administrateur rendrait le bot inutilisable."
+            rf"🚫 无法移除 ID 为 `{safe_id}` 的用户。移除最后一个管理员将使机器人无法使用。",
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=get_main_menu_keyboard()  # <-- ATTACHER LE MENU
         )
         return
 
@@ -55,5 +74,10 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await storage_manager.write_data(WHITELIST_FILE, new_whitelist)
 
     logger.info(f"Admin retiré: ID {target_id} par {update.effective_user.username}")
-    # Correction de l'encodage
-    await update.message.reply_text(f"✅ Utilisateur avec l'ID {target_id} retiré de la whitelist.")
+
+    # TRADUCTION : Succès
+    await update.message.reply_text(
+        rf"✅ ID 为 `{safe_id}` 的用户已从白名单中移除。",
+        parse_mode=ParseMode.MARKDOWN_V2,
+        reply_markup=get_main_menu_keyboard()  # <-- ATTACHER LE MENU
+    )

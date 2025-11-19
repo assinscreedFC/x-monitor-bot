@@ -3,10 +3,13 @@ import logging
 import time
 from telegram import Update
 from telegram.ext import ContextTypes
+from telegram.constants import ParseMode  # <-- 1. AJOUTER IMPORT PARSEMODE
+from telegram.helpers import escape_markdown  # <-- AJOUTER IMPORT POUR L'ECHAPPEMENT
 
-from config import settings  # Pour l'option "links" par défaut
+from config import settings
 from core.json_manager import storage_manager, MONITORS_FILE
-from core.auth import whitelist_required  # <-- IMPORT DE LA SÉCURITÉ
+from core.auth import whitelist_required
+from .menu import get_main_menu_keyboard  # <-- 2. IMPORTER LE CLAVIER PRINCIPAL
 
 # On récupère le logger global
 logger = logging.getLogger('TelegramBot')
@@ -23,7 +26,7 @@ async def _get_next_monitor_id(monitors_list: list) -> int:
     return max_id + 1
 
 
-@whitelist_required  # <-- DÉCORATEUR AJOUTÉ
+@whitelist_required
 async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Ajoute une nouvelle surveillance de compte X vers un chat Telegram.
@@ -33,11 +36,12 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"Commande /add_watch reçue de {user.username} ({user.id})")
 
     # 1. Valider les arguments
-    # Doit avoir au moins 2 arguments (compte et chat_id)
     if not context.args or len(context.args) < 2:
         await update.message.reply_text(
-            "Usage: /add_watch <@compte_x> <chat_id> [inclure_liens: true/false]\n"
-            "Exemple: /add_watch @NASA -100123456789 true"
+            "用法: /add_watch <@X账户> <ChatID> [inclure\_liens: true/false]\n"
+            "示例: /add_watch @NASA \-100123456789 true",
+            reply_markup=get_main_menu_keyboard(),  # <-- 3. ATTACHER LE MENU
+            parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
@@ -45,7 +49,6 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     telegram_chat_id = context.args[1].strip()
 
     # 2. Gérer l'argument optionnel 'include_links'
-    # Par défaut, utilise la valeur de settings.INCLUDE_LINKS_DEFAULT
     include_links_status = settings.INCLUDE_LINKS_DEFAULT
 
     if len(context.args) > 2:
@@ -55,8 +58,11 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif link_arg in ['false', 'off', 'no']:
             include_links_status = False
         else:
+            # Message d'erreur non valide
             await update.message.reply_text(
-                "⚠️ Argument 'inclure_liens' non valide. Utilisez 'true' ou 'false'."
+                "⚠️ 'inclure\_liens' 参数无效。请使用 'true' 或 'false'\.",
+                reply_markup=get_main_menu_keyboard(),  # <-- ATTACHER LE MENU
+                parse_mode=ParseMode.MARKDOWN_V2
             )
             return
 
@@ -67,7 +73,11 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for monitor in monitors_data:
         if (monitor.get('x_account') == x_account and
                 monitor.get('telegram_chat_id') == telegram_chat_id):
-            await update.message.reply_text(f"⚠️ Cette surveillance (@{x_account} -> {telegram_chat_id}) existe déjà.")
+            await update.message.reply_text(
+                rf"⚠️ 监控 (@{escape_markdown(x_account, 2)} \-\> {escape_markdown(telegram_chat_id, 2)}) 已存在\.",
+                reply_markup=get_main_menu_keyboard(),  # <-- ATTACHER LE MENU
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
             return
 
     # 5. Générer le nouvel objet Monitor (avec ID unique)
@@ -77,7 +87,7 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "id": new_id,
         "x_account": x_account,
         "telegram_chat_id": telegram_chat_id,
-        "include_links": include_links_status,  # Utilise la valeur décidée
+        "include_links": include_links_status,
         "enabled": True,
         "last_post_id": "INIT",
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -89,13 +99,20 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     logger.info(f"Nouvelle surveillance (ID: {new_id}) ajoutée par {user.username}")
 
-    # Message de confirmation
-    links_text = "Oui" if include_links_status else "Non"
+    # Message de confirmation (FIN DE L'INTERACTION)
+    links_text = "是 (Oui)" if include_links_status else "否 (Non)"
+
+    # Échapper les valeurs pour le message final
+    safe_id = escape_markdown(str(new_id), 2)
+    safe_account = escape_markdown(x_account, 2)
+    safe_chat = escape_markdown(telegram_chat_id, 2)
+
     await update.message.reply_text(
-        f"✅ Surveillance ajoutée !\n"
-        f"ID: <b>{new_id}</b>\n"
-        f"Compte X: <b>@{x_account}</b>\n"
-        f"Chat Telegram: <b>{telegram_chat_id}</b>\n"
-        f"Inclure les liens: <b>{links_text}</b>",
-        parse_mode='HTML'
+        rf"✅ 监控添加成功！\n"
+        rf"ID: **{safe_id}**\n"
+        rf"X 账户: **@{safe_account}**\n"
+        rf"Telegram 群组: **{safe_chat}**\n"
+        rf"包含链接: **{links_text}**",
+        reply_markup=get_main_menu_keyboard(),  # <-- ATTACHER LE MENU
+        parse_mode=ParseMode.MARKDOWN_V2
     )
