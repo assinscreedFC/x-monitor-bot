@@ -45,8 +45,7 @@ async def send_long_message(update: Update, text: str, parse_mode: str = None):
 
         if i > 0:
             # FIX FINAL DANS LE HEADER (Doit être correct maintenant)
-            header = rf"**\(继续 \- 第 {i + 1}/{len(parts)} 部分\)**\n"
-
+            header = rf"\[继续 \- 第 {i + 1}/{len(parts)} 部分\]\n"
         await update.message.reply_text(header + part, parse_mode=parse_mode, reply_markup=reply_markup)
 
         if len(parts) > 2:
