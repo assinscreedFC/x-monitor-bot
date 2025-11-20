@@ -130,8 +130,8 @@ async def run_worker(worker_id: int, task_queue: Queue, stop_event: asyncio.Even
             else:
                 new_last_id = last_seen_id
                 for tweet in new_tweets:
-                    message_text = f"<b>Nouveau post de @{account}:</b>\n\n"
-                    message_text += f"{tweet['text']}\n\n"
+                    #message_text = f"<b>Nouveau post de @{account}:</b>\n\n"
+                    message_text = f"{tweet['text']}"
                     message_text += f"<a href='{tweet['url']}'>Voir sur X</a>"
 
                     success = await send_telegram_message(app, chat_id, message_text, include_links)
