@@ -1,72 +1,72 @@
 [
   {
     "id": 1,
-    "proxy_url": "http://82.23.127.99:8010",
+    "proxy_url": "http://isp.oxylabs.io:8010",
     "active": true,
     "error_count": 0,
-    "last_used": "2025-11-19T20:55:53Z"
+    "last_used": "2025-11-20T00:10:54Z"
   },
   {
     "id": 2,
-    "proxy_url": "http://82.23.127.204:8009",
+    "proxy_url": "http://isp.oxylabs.io:8009",
     "active": true,
     "error_count": 0,
-    "last_used": "2025-11-19T20:59:06Z"
+    "last_used": "2025-11-20T00:15:33Z"
   },
   {
     "id": 3,
-    "proxy_url": "http://82.23.124.179:8008",
+    "proxy_url": "http://isp.oxylabs.io:8008",
     "active": true,
     "error_count": 0,
-    "last_used": "2025-11-19T21:03:24Z"
+    "last_used": "2025-11-20T00:21:41Z"
   },
   {
     "id": 4,
-    "proxy_url": "http://82.23.118.163:8007",
+    "proxy_url": "http://isp.oxylabs.io:8007",
     "active": true,
     "error_count": 0,
-    "last_used": "2025-11-19T21:09:09Z"
+    "last_used": "2025-11-20T00:26:22Z"
   },
   {
     "id": 5,
-    "proxy_url": "http://82.23.117.30:8006",
+    "proxy_url": "http://isp.oxylabs.io:8006",
     "active": true,
     "error_count": 0,
-    "last_used": "2025-11-19T21:13:49Z"
+    "last_used": "2025-11-20T00:31:47Z"
   },
   {
     "id": 6,
-    "proxy_url": "http://82.23.117.14:8005",
+    "proxy_url": "http://isp.oxylabs.io:8005",
     "active": true,
     "error_count": 0,
-    "last_used": "2025-11-19T21:17:17Z"
+    "last_used": "2025-11-20T00:37:22Z"
   },
   {
     "id": 7,
-    "proxy_url": "http://82.23.125.32:8004",
+    "proxy_url": "http://isp.oxylabs.io:8004",
     "active": true,
     "error_count": 0,
-    "last_used": "2025-11-19T21:20:18Z"
+    "last_used": "2025-11-19T23:39:50Z"
   },
   {
     "id": 8,
-    "proxy_url": "http://82.23.125.217:8003",
+    "proxy_url": "http://isp.oxylabs.io:8003",
     "active": true,
     "error_count": 0,
-    "last_used": "2025-11-19T21:25:16Z"
+    "last_used": "2025-11-19T23:45:37Z"
   },
   {
     "id": 9,
-    "proxy_url": "http://82.23.125.197:8002",
+    "proxy_url": "http://isp.oxylabs.io:8002",
     "active": true,
     "error_count": 0,
-    "last_used": "2025-11-19T21:29:07Z"
+    "last_used": "2025-11-19T23:49:37Z"
   },
   {
     "id": 10,
-    "proxy_url": "http://82.23.125.161:8001",
+    "proxy_url": "http://isp.oxylabs.io:8001",
     "active": true,
     "error_count": 0,
-    "last_used": "2025-11-19T21:33:04Z"
+    "last_used": "2025-11-19T23:57:51Z"
   }
 ]

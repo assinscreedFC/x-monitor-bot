@@ -1,12 +1,20 @@
 services:
   telegram_bot:
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    environment:
+      # Force l'affichage virtuel pour certaines libs (optionnel mais utile)
+      - DISPLAY=:99
     build:
       # Le contexte est le dossier parent (le root du projet)
       context: ..
       # Le Dockerfile est dans le dossier deploy (relatif au contexte)
       dockerfile: deploy/Dockerfile
     container_name: telegram_bot
+    shm_size: '2gb'
     restart: always
+
     # Le .env file est dans config (relatif au contexte)
     env_file:
       - ../config/.env

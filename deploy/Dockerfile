@@ -10,6 +10,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN apt-get update \
     # 2. Installer MANUELLEMENT toutes les dépendances dont Chromium a besoin
     && apt-get install -y \
+    xvfb \
+    xauth \
+    # Installation des polices (Indispensable pour que X.com ne détecte pas le bot)
+    fonts-freefont-ttf \
+    fonts-noto-color-emoji \
+    fonts-roboto \
+    libcups2 \
     libnss3 \
     libnspr4 \
     libdbus-1-3 \
@@ -28,11 +35,16 @@ RUN apt-get update \
     libgtk-3-0 \
     libpango-1.0-0 \
     libcairo2 \
-    # 3. Installer SEULEMENT le navigateur Chromium 
+    # 3. Installer SEULEMENT le navigateur Chromium
     && playwright install chromium \
     # 4. Nettoyer le cache
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . .
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+# 6. Définir l'entrypoint (C'est ce script qui sera lancé au démarrage)
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["python","main.py"]

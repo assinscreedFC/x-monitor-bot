@@ -8,7 +8,7 @@ def human_delay(a=1.2, b=2.5):
     time.sleep(random.uniform(a, b))
 
 # --- CONFIG ---
-temp_profile = str(Path.home() / "my_playwright_profile_2")
+temp_profile = str(Path.home() / "my_playwright_profile_1")
 os.makedirs(temp_profile, exist_ok=True)
 target_url = ("https://x.com/")  # ou la page cible où tu veux te connecter
 proxy_config = {

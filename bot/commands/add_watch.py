@@ -3,14 +3,15 @@ import logging
 import time
 from telegram import Update
 from telegram.ext import ContextTypes
-from telegram.constants import ParseMode
-from telegram.helpers import escape_markdown
+# Pas besoin d'importer ParseMode si on utilise le string 'HTML'
+import html
 
 from config import settings
 from core.json_manager import storage_manager, MONITORS_FILE
 from core.auth import whitelist_required
 from .menu import get_main_menu_keyboard
 
+# On récupère le logger global
 logger = logging.getLogger('TelegramBot')
 
 
@@ -20,7 +21,8 @@ async def _get_next_monitor_id(monitors_list: list) -> int:
     """
     if not monitors_list:
         return 1
-    return max(item.get('id', 0) for item in monitors_list) + 1
+    max_id = max(item.get('id', 0) for item in monitors_list)
+    return max_id + 1
 
 
 @whitelist_required
@@ -32,13 +34,13 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     logger.info(f"Commande /add_watch reçue de {user.username} ({user.id})")
 
-    # 1. Vérifier les arguments
+    # 1. Valider les arguments
     if not context.args or len(context.args) < 2:
         await update.message.reply_text(
-            r"用法: /add_watch <@X账户> <ChatID> [inclure\_liens: true/false]\n"
-            r"示例: /add_watch @NASA -100123456789 true",
+            "用法: <code>/add_watch &lt;@X账户&gt; &lt;ChatID&gt; [inclure_liens: true/false]</code>\n"
+            "示例: <code>/add_watch @NASA -100123456789 true</code>",
             reply_markup=get_main_menu_keyboard(),
-            parse_mode=ParseMode.MARKDOWN_V2
+            parse_mode='HTML'  # <-- Utilisation directe du string
         )
         return
 
@@ -54,10 +56,11 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif link_arg in ['false', 'off', 'no']:
             include_links_status = False
         else:
+            # CORRECTION DU WARNING : 'inclure_liens' sans antislash
             await update.message.reply_text(
-                r"⚠️ 'inclure\_liens' 参数无效。请使用 'true' 或 'false'\.",
+                "⚠️ 'inclure_liens' 参数无效。请使用 'true' 或 'false'.",
                 reply_markup=get_main_menu_keyboard(),
-                parse_mode=ParseMode.MARKDOWN_V2
+                parse_mode='HTML'
             )
             return
 
@@ -67,10 +70,13 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 4. Vérifier les doublons
     for monitor in monitors_data:
         if monitor.get('x_account') == x_account and monitor.get('telegram_chat_id') == telegram_chat_id:
+            safe_account = html.escape(x_account)
+            safe_chat = html.escape(telegram_chat_id)
+
             await update.message.reply_text(
-                rf"⚠️ 监控 (@{escape_markdown(x_account, 2)} -> {escape_markdown(telegram_chat_id, 2)}) 已存在\.",
+                f"⚠️ 监控 (<code>@{safe_account}</code> -> <code>{safe_chat}</code>) 已存在.",
                 reply_markup=get_main_menu_keyboard(),
-                parse_mode=ParseMode.MARKDOWN_V2
+                parse_mode='HTML'
             )
             return
 
@@ -94,16 +100,17 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # 7. Message de confirmation
     links_text = "是 (Oui)" if include_links_status else "否 (Non)"
-    safe_id = escape_markdown(str(new_id), 2)
-    safe_account = escape_markdown(x_account, 2)
-    safe_chat = escape_markdown(telegram_chat_id, 2)
+
+    safe_id = html.escape(str(new_id))
+    safe_account = html.escape(x_account)
+    safe_chat = html.escape(telegram_chat_id)
 
     await update.message.reply_text(
-        rf"✅ 监控添加成功！\n"
-        rf"ID: **{safe_id}**\n"
-        rf"X 账户: **@{safe_account}**\n"
-        rf"Telegram 群组: **{safe_chat}**\n"
-        rf"包含链接: **{links_text}**",
+        f"✅ 监控添加成功！\n"
+        f"ID: <b>{safe_id}</b>\n"
+        f"X 账户: <b>@{safe_account}</b>\n"
+        f"Telegram 群组: <b>{safe_chat}</b>\n"
+        f"包含链接: <b>{links_text}</b>",
         reply_markup=get_main_menu_keyboard(),
-        parse_mode=ParseMode.MARKDOWN_V2
+        parse_mode='HTML'
     )

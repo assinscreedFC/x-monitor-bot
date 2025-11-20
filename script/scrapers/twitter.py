@@ -19,6 +19,39 @@ SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
 # Zone Info pour comparer les dates (X utilise UTC)
 UTC = ZoneInfo("UTC")
 
+# --- CONSTANTE D'IDENTITÉ (PC Windows) ---
+REAL_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+
+
+# --- NOUVELLE FONCTION DE CAMOUFLAGE (Remplace la librairie externe) ---
+async def apply_stealth(page: Page):
+    """
+    Injecte manuellement du JavaScript pour cacher que c'est un bot.
+    """
+    await page.add_init_script("""
+        // 1. Cacher le webdriver
+        Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+
+        // 2. Masquer les plugins (Chrome headless n'en a pas)
+        Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+
+        // 3. Cacher les permissions
+        const originalQuery = window.navigator.permissions.query;
+        window.navigator.permissions.query = (parameters) => (
+            parameters.name === 'notifications' ?
+                Promise.resolve({ state: 'granted', onchange: null }) :
+                originalQuery(parameters)
+        );
+
+        // 4. Émulation WebGL basique (Carte graphique Intel)
+        const getParameter = WebGLRenderingContext.prototype.getParameter;
+        WebGLRenderingContext.prototype.getParameter = function(parameter) {
+            if (parameter === 37445) return 'Intel Open Source Technology Center';
+            if (parameter === 37446) return 'Mesa DRI Intel(R) HD Graphics 630 (Kaby Lake GT2)';
+            return getParameter(parameter);
+        };
+    """)
+
 
 # --- UTILITAIRES ---
 
@@ -27,10 +60,7 @@ async def human_delay(a=0.5, b=1.5):
 
 
 async def _save_screenshot_safe(page: Page, prefix: str, username: str = "unknown") -> str:
-    """
-    Essaie de prendre une capture d'écran et retourne le chemin (ou une chaîne vide si échec).
-    """
-    """try:
+    try:
         timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         filename = f"{username}_{prefix}_{timestamp}.png"
         path = SCREENSHOTS_DIR / filename
@@ -38,60 +68,48 @@ async def _save_screenshot_safe(page: Page, prefix: str, username: str = "unknow
         logger.info(f"[Screenshot] Sauvegardé: {path}")
         return str(path)
     except Exception as e:
-        logger.error(f"[Screenshot] Échec lors de la capture ({prefix}): {e}")"""
-    return ""
+        logger.error(f"[Screenshot] Échec capture ({prefix}): {e}")
+        return ""
 
 
 async def smooth_scroll(page: Page, distance: int = 3000, steps: int = 15, delay_min: float = 0.1,
                         delay_max: float = 0.3):
-    """
-    NOUVEAU: Simule un scroll humain doux au lieu d'un 'wheel' instantané.
-    """
     scroll_step = distance // steps
     try:
         for _ in range(steps):
             await page.evaluate(f"window.scrollBy(0, {scroll_step})")
             await asyncio.sleep(random.uniform(delay_min, delay_max))
     except Exception as e:
-        logger.warning(f"[Scroll] Erreur pendant le smooth_scroll: {e}")
+        logger.warning(f"[Scroll] Erreur: {e}")
 
 
-# --- LOGIQUE D'EXTRACTION (AVEC FILTRE AUTEUR) ---
+# --- LOGIQUE D'EXTRACTION ---
 
 async def extract_visible_tweets(page: Page, seen_ids: Set[str], username: str, last_seen_date: datetime = None) -> \
-Tuple[
-    List[Dict], bool]:
-    """
-    Extrait les tweets visibles et les filtre par date de publication ET par auteur.
-    Retourne (liste_des_nouveaux_tweets, y_a-t-il_eu_un_ancien_tweet_vu)
-    """
+Tuple[List[Dict], bool]:
     tweets = []
     found_oldest_tweet = False
 
     try:
         articles = await page.query_selector_all('article')
     except Exception as e:
-        logger.warning(f"Sélecteur 'article' non trouvé ou page fermée: {e}")
-        try:
-            await _save_screenshot_safe(page, "extract_selector_error", username)
-        except Exception:
-            pass
+        logger.warning(f"Sélecteur 'article' non trouvé: {e}")
         return [], False
 
     for idx, article in enumerate(articles):
         try:
-            # Extraction du contenu
+            # Extraction du texte
             tweet_texts = await article.query_selector_all('div[lang]')
             tweet_parts = []
             for part in tweet_texts:
                 try:
                     txt = await part.inner_text()
-                    if txt:
-                        tweet_parts.append(txt)
-                except Exception:
-                    logger.debug(f"inner_text failed on part #{idx}")
+                    if txt: tweet_parts.append(txt)
+                except:
+                    pass
             tweet = " ".join(tweet_parts).strip()
 
+            # Extraction Date
             date_el = await article.query_selector("time")
             date_str = await date_el.get_attribute("datetime") if date_el else None
 
@@ -100,25 +118,19 @@ Tuple[
             else:
                 continue
 
+            # Extraction Lien et ID
             link_el = await article.query_selector('a[href*="/status/"]')
 
-            # --- CORRECTION 1: VÉRIFICATION DE L'AUTEUR ---
+            # Vérification Auteur (Anti-Pub/Recommandation)
             href = await link_el.get_attribute("href") if link_el else None
-
-            if not href:
-                # logger.debug(f"Article {idx} ignoré (pas de lien status, prob. 'suggéré')")
-                continue  # Ignore les articles sans lien (pubs, "who to follow", etc.)
+            if not href: continue
 
             try:
-                # Le href est au format "/auteur_du_tweet/status/..."
                 tweet_author = href.split('/')[1]
                 if tweet_author.lower() != username.lower():
-                    # logger.debug(f"Article {idx} ignoré (auteur @{tweet_author} != @{username})")
-                    continue  # C'est un tweet "suggéré" ou une pub
+                    continue  # Ignore les tweets qui ne sont pas de l'auteur
             except IndexError:
-                # logger.debug(f"Article {idx} ignoré (format lien href étrange: {href})")
                 continue
-            # --- FIN VÉRIFICATION AUTEUR ---
 
             link = "https://x.com" + href
             tweet_id = link.split("/")[-1] if link else None
@@ -126,7 +138,7 @@ Tuple[
             if not tweet_id or not tweet:
                 continue
 
-            # --- LOGIQUE DE FILTRAGE PAR DATE ---
+            # Logique de date
             if last_seen_date:
                 if post_date <= last_seen_date:
                     found_oldest_tweet = True
@@ -144,25 +156,20 @@ Tuple[
 
         except Exception as e:
             logger.error(f"Erreur extraction tweet #{idx}: {e}", exc_info=False)
-            await _save_screenshot_safe(page, f"extract_error_{idx}", username)
 
     return tweets, found_oldest_tweet
 
 
-# --- FONCTION PRINCIPALE DE SCRAPING ---
+# --- FONCTION PRINCIPALE ---
 
 async def fetch_new_posts(p: Playwright, username: str, profile_path: str, last_seen_id: str = None,
                           max_scrolls: int = 6, proxy: Dict = None) -> List[Dict]:
-    """
-    Fonction principale de scraping, utilisant la date de publication comme ID de suivi.
-    """
-
+    # Conversion de la date
     last_seen_date = None
     if last_seen_id and last_seen_id != "INIT":
         try:
             last_seen_date = datetime.fromisoformat(last_seen_id.replace('Z', '+00:00'))
         except ValueError:
-            logger.error(f"ID de date invalide dans la DB: {last_seen_id}. Reprendra l'historique complet.")
             last_seen_date = None
 
     tweets_collected = []
@@ -175,131 +182,106 @@ async def fetch_new_posts(p: Playwright, username: str, profile_path: str, last_
     scroll_limit = 1 if is_init_run else max_scrolls
 
     try:
-        logger.info(f'proxy: {proxy}')
+        logger.info(f'Lancement scraping pour @{username} avec proxy: {proxy}')
+
+        args = [
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-blink-features=AutomationControlled",
+            "--disable-infobars",
+            "--hide-scrollbars",
+            "--mute-audio",
+            "--use-gl=swiftshader",
+            "--window-size=1920,1080",
+        ]
+
+        # 1. Lancement du navigateur avec profil persistant
         browser = await p.chromium.launch_persistent_context(
             user_data_dir=profile_path,
-            headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-blink-features=AutomationControlled",
-                "--disable-gpu",
-                "--start-maximized"
-            ],
+            headless=False,
+            args=args,
             proxy=proxy,
+            user_agent=REAL_USER_AGENT,
+            viewport={"width": 1920, "height": 1080},
+            locale="fr-FR",
+            timezone_id="Europe/Paris",
+            permissions=["geolocation", "notifications"],
         )
+
         page = await browser.new_page()
 
-        # Action 1: Navigation
+        # 2. Application du camouflage (Stealth)
+        await apply_stealth(page)
+
+        # 3. Navigation
         try:
-            await page.goto(target_url, timeout=200000, wait_until="networkidle")
-            await _save_screenshot_safe(page, "debug_1_after_goto", username)  # DEBUG SCREENSHOT
+            await page.goto(target_url, timeout=90000, wait_until="domcontentloaded")
+            await human_delay(2.0, 3.0)
+
         except Exception as e:
-            logger.error(f"[Scraper] Erreur lors du goto({target_url}): {e}")
+            logger.error(f"[Scraper] Erreur goto({target_url}): {e}")
             await _save_screenshot_safe(page, "error_goto", username)
             await browser.close()
             return []
 
-        # Action 2: Attente des articles
+        # 4. Vérification : Page chargée ?
         try:
-            await page.wait_for_selector("article", timeout=200000)
-            logger.info(f"[Scraper] Page @{username} chargée, articles détectés.")
-            await _save_screenshot_safe(page, "debug_2_after_wait_article", username)  # DEBUG SCREENSHOT
+            await page.wait_for_selector("article", timeout=60000)
         except Exception as e:
-            logger.error(f"[Scraper] @{username}: Page non chargée ou session invalide: {e}")
+            logger.error(f"[Scraper] @{username}: Pas d'articles trouvés (Timeout).")
             await _save_screenshot_safe(page, "error_no_articles", username)
             await browser.close()
             return []
 
+        # 5. Vérification : Redirection Login ou Erreur ?
         current_url = page.url
-
-        # --- CORRECTION 2: VÉRIFICATION DE REDIRECTION SILENCIEUSE ---
-        if f"/{username.lower()}" not in current_url.lower():
-            logger.critical(
-                f"[Scraper] @{username}: Redirection silencieuse détectée ! "
-                f"Attendait '{username}' mais l'URL est '{current_url}'. Session probablement limitée."
-            )
-            await _save_screenshot_safe(page, "error_silent_redirect", username)
-            await browser.close()
-            return []
-        # --- FIN DE LA VÉRIFICATION ---
-
-        # Action 3: Vérification de redirection vers Login
-        if "login" in current_url or "auth/login" in current_url:
-            logger.critical(
-                f"[Scraper] Session invalide. Redirigé vers le login ({current_url}). Relancez setup_session.py.")
-            await _save_screenshot_safe(page, "error_redirected_to_login", username)
+        if "login" in current_url or "auth" in current_url:
+            logger.critical(f"[Scraper] Redirigé vers Login pour @{username}.")
+            await _save_screenshot_safe(page, "error_login_redirect", username)
             await browser.close()
             return []
 
-        logger.info(f"[Scraper] Début scroll @{username} (limite: {scroll_limit}, depuis: {last_seen_id or 'INIT'})")
+        # 6. Boucle de Scroll et Extraction
+        logger.info(f"[Scraper] Début scroll @{username}")
 
         for scroll in range(scroll_limit):
-            # Action 4: Avant extraction
-            await _save_screenshot_safe(page, f"debug_scroll_{scroll}_A_before_extract", username)  # DEBUG SCREENSHOT
-
             new_tweets, found_last = await extract_visible_tweets(page, seen_ids, username, last_seen_date)
             tweets_collected.extend(new_tweets)
 
-            # Action 5: Après extraction
-            await _save_screenshot_safe(page, f"debug_scroll_{scroll}_B_after_extract", username)  # DEBUG SCREENSHOT
-
             if found_last and not is_init_run:
-                logger.info(f"[Scraper] @{username}: Tâche terminée (ancien tweet trouvé).")
+                logger.info(f"[Scraper] @{username}: Ancien tweet trouvé, arrêt.")
                 break
 
-            if scroll == scroll_limit - 1:
-                logger.warning(
-                    f"[Scraper] @{username}: Limite de scroll atteinte ({scroll_limit}) pour ce cycle.")
-
-            # Action 6: Clic "Show more"
-            buttons = await page.query_selector_all('text="Show more"')
-            for idx_b, button in enumerate(buttons):
-                try:
-                    await button.click()
-                    await _save_screenshot_safe(page, f"debug_scroll_{scroll}_C_click_showmore_{idx_b}",
-                                                username)  # DEBUG SCREENSHOT
+            # Clic "Show more"
+            try:
+                buttons = await page.query_selector_all('text="Show more"')
+                for btn in buttons:
+                    await btn.click()
                     await human_delay(0.5, 1.0)
-                except Exception as e:
-                    logger.debug(f"Échec click Show more #{idx_b}: {e}")
-                    await _save_screenshot_safe(page, f"error_showmore_failed_{idx_b}", username)
+            except:
+                pass
 
-            # Action 7: Scroll (lent)
-            await smooth_scroll(page, distance=3000, steps=10)  # <-- NOUVEAU SCROLL LENT
-            await _save_screenshot_safe(page, f"debug_scroll_{scroll}_D_after_scroll", username)  # DEBUG SCREENSHOT
+            await smooth_scroll(page, distance=3000, steps=10)
+            await human_delay(1.5, 2.5)
 
-            await human_delay(1.5, 2.5)  # Délai post-scroll
-
-        # Action 8: Fin de boucle
-        if not tweets_collected:
-            logger.info(f"[Scraper] @{username}: Aucun tweet collecté pendant ce cycle.")
-            await _save_screenshot_safe(page, "debug_empty_cycle", username)
-
-        await _save_screenshot_safe(page, "debug_final_before_close", username)  # DEBUG SCREENSHOT
         await browser.close()
 
-        # Finalisation et tri
+        # Tri et retour
         tweets_collected.sort(key=lambda t: t['date_obj'])
 
         if not tweets_collected:
             return []
 
         if is_init_run:
-            logger.info(f"[Scraper] @{username}: Run initial. Ne retourne que le tweet le plus récent.")
             return [tweets_collected[-1]]
 
         return tweets_collected
 
     except Exception as e:
-        logger.exception(f"Erreur majeure lors du scraping de @{username}: {e}")
+        logger.exception(f"Erreur majeure scraping @{username}: {e}")
         try:
-            if page and not page.is_closed():
-                await _save_screenshot_safe(page, "error_major_exception", username)
-        except Exception:
+            if page: await _save_screenshot_safe(page, "error_fatal", username)
+            if browser: await browser.close()
+        except:
             pass
-        if browser:
-            try:
-                await browser.close()
-            except Exception:
-                pass
         return []
