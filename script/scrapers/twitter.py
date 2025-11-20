@@ -23,27 +23,20 @@ UTC = ZoneInfo("UTC")
 REAL_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 
 
-# --- NOUVELLE FONCTION DE CAMOUFLAGE (Remplace la librairie externe) ---
+# --- NOUVELLE FONCTION DE CAMOUFLAGE ---
 async def apply_stealth(page: Page):
     """
     Injecte manuellement du JavaScript pour cacher que c'est un bot.
     """
     await page.add_init_script("""
-        // 1. Cacher le webdriver
         Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-
-        // 2. Masquer les plugins (Chrome headless n'en a pas)
         Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-
-        // 3. Cacher les permissions
         const originalQuery = window.navigator.permissions.query;
         window.navigator.permissions.query = (parameters) => (
             parameters.name === 'notifications' ?
                 Promise.resolve({ state: 'granted', onchange: null }) :
                 originalQuery(parameters)
         );
-
-        // 4. Émulation WebGL basique (Carte graphique Intel)
         const getParameter = WebGLRenderingContext.prototype.getParameter;
         WebGLRenderingContext.prototype.getParameter = function(parameter) {
             if (parameter === 37445) return 'Intel Open Source Technology Center';
@@ -53,7 +46,7 @@ async def apply_stealth(page: Page):
     """)
 
 
-# --- UTILITAIRES ---
+# --- UTILITAIRES GÉNÉRAUX ---
 
 async def human_delay(a=0.5, b=1.5):
     await asyncio.sleep(random.uniform(a, b))
@@ -83,10 +76,112 @@ async def smooth_scroll(page: Page, distance: int = 3000, steps: int = 15, delay
         logger.warning(f"[Scroll] Erreur: {e}")
 
 
-# --- LOGIQUE D'EXTRACTION ---
+# --- UTILITAIRES MEDIA (NOUVEAU) ---
+
+def _first_src_from_srcset(srcset: str) -> str:
+    if not srcset:
+        return ""
+    parts = [p.strip() for p in srcset.split(',') if p.strip()]
+    if not parts:
+        return ""
+    # Format habituel: "url 1x, url 2x" -> on prend l'url
+    return parts[0].split(' ')[0]
+
+
+def _is_probably_media_url(url: str) -> bool:
+    if not url:
+        return False
+    u = url.lower()
+    media_signals = ['twimg', 'pbs.twimg', '/media/', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.m3u8']
+    return any(s in u for s in media_signals)
+
+
+async def _collect_media_from_article(article: Page) -> List[str]:
+    """
+    Récupère URLs des images/vidéos présent dans un <article>.
+    Nettoie les URLs Twitter pour avoir la meilleure qualité (.jpg/.png).
+    """
+    media_urls: List[str] = []
+
+    # 1. Images (src / data-src / srcset)
+    try:
+        imgs = await article.query_selector_all('img')
+        for img in imgs:
+            try:
+                src = await img.get_attribute('src') or await img.get_attribute('data-src')
+                if not src:
+                    srcset = await img.get_attribute('srcset') or await img.get_attribute('data-srcset')
+                    src = _first_src_from_srcset(srcset)
+                if not src:
+                    continue
+
+                # Normalisation URL
+                if src.startswith("//"):
+                    src = "https:" + src
+                if src.startswith("/"):
+                    src = "https://x.com" + src
+
+                # --- NETTOYAGE SPECIFIQUE TWITTER (Le changement est ici) ---
+                if "pbs.twimg.com" in src and "format=" in src:
+                    # Exemple: https://pbs.twimg.com/.../XYZ?format=jpg&name=small
+                    # On veut: https://pbs.twimg.com/.../XYZ.jpg
+                    try:
+                        base_url = src.split('?')[0]
+                        extension = "jpg"  # par défaut
+                        if "format=png" in src:
+                            extension = "png"
+                        src = f"{base_url}.{extension}"
+                    except:
+                        pass  # Si échec, on garde l'original
+                # ------------------------------------------------------------
+
+                # Filtrage (avatars, emojis, etc.)
+                alt = (await img.get_attribute('alt') or "").lower()
+                if 'profile_images' in src or 'avatar' in src or 'emoji' in src or 'sprite' in src:
+                    continue
+                if src.startswith('data:'):
+                    continue
+
+                if _is_probably_media_url(src):
+                    media_urls.append(src)
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    # 2. Vidéos / Source tags
+    try:
+        video_tags = await article.query_selector_all('video, source')
+        for v in video_tags:
+            try:
+                vsrc = await v.get_attribute('src') or await v.get_attribute('data-src')
+                if not vsrc:
+                    continue
+                if vsrc.startswith("//"):
+                    vsrc = "https:" + vsrc
+                if vsrc.startswith("/"):
+                    vsrc = "https://x.com" + vsrc
+
+                if _is_probably_media_url(vsrc):
+                    media_urls.append(vsrc)
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    # Déduplication en gardant l'ordre
+    seen = set()
+    unique = []
+    for u in media_urls:
+        if u not in seen:
+            seen.add(u)
+            unique.append(u)
+    return unique
+
+# --- LOGIQUE D'EXTRACTION (MISE À JOUR) ---
 
 async def extract_visible_tweets(page: Page, seen_ids: Set[str], username: str, last_seen_date: datetime = None) -> \
-Tuple[List[Dict], bool]:
+        Tuple[List[Dict], bool]:
     tweets = []
     found_oldest_tweet = False
 
@@ -135,7 +230,8 @@ Tuple[List[Dict], bool]:
             link = "https://x.com" + href
             tweet_id = link.split("/")[-1] if link else None
 
-            if not tweet_id or not tweet:
+            # Note: On accepte un tweet même sans texte s'il a des médias
+            if not tweet_id:
                 continue
 
             # Logique de date
@@ -145,12 +241,16 @@ Tuple[List[Dict], bool]:
                     break
 
             if tweet_id not in seen_ids:
+                # --- RECUPERATION DES MEDIAS ---
+                media_urls = await _collect_media_from_article(article)
+
                 tweets.append({
                     "id": tweet_id,
                     "text": tweet,
                     "date_str": date_str,
                     "date_obj": post_date,
-                    "url": link
+                    "url": link,
+                    "media": media_urls  # Ajout du champ media
                 })
                 seen_ids.add(tweet_id)
 
