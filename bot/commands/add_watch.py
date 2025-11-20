@@ -3,7 +3,6 @@ import logging
 import time
 from telegram import Update
 from telegram.ext import ContextTypes
-# Pas besoin d'importer ParseMode si on utilise le string 'HTML'
 import html
 
 from config import settings
@@ -11,14 +10,25 @@ from core.json_manager import storage_manager, MONITORS_FILE
 from core.auth import whitelist_required
 from .menu import get_main_menu_keyboard
 
-# On récupère le logger global
 logger = logging.getLogger('TelegramBot')
 
 
+def escape_for_html(text: str) -> str:
+    """
+    Échappe le texte pour l'envoyer en parse_mode='HTML' chez Telegram.
+    On utilise html.escape puis on remplace les parenthèses (et autres si besoin)
+    par leurs entités pour éviter les erreurs du parser d'entités.
+    """
+    if text is None:
+        return ''
+    escaped = html.escape(str(text))
+    # Telegram peut parfois rejeter certains caractères — on les convertit en entités HTML sûres
+    escaped = escaped.replace('(', '&#40;').replace(')', '&#41;')
+    # &lt; &gt; &amp; " ' sont déjà traités par html.escape
+    return escaped
+
+
 async def _get_next_monitor_id(monitors_list: list) -> int:
-    """
-    Calcule l'ID unique suivant en se basant sur le max(id) actuel.
-    """
     if not monitors_list:
         return 1
     max_id = max(item.get('id', 0) for item in monitors_list)
@@ -27,20 +37,20 @@ async def _get_next_monitor_id(monitors_list: list) -> int:
 
 @whitelist_required
 async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Ajoute une nouvelle surveillance de compte X vers un chat Telegram.
-    Format: /add_watch <@compte_x> <chat_id> [inclure_liens: true/false]
-    """
     user = update.effective_user
     logger.info(f"Commande /add_watch reçue de {user.username} ({user.id})")
 
     # 1. Valider les arguments
     if not context.args or len(context.args) < 2:
+        # Construire le bloc d'usage en échappant d'abord le texte interne,
+        # puis l'entourer d'un <pre> pour conserver la mise en forme.
+        usage_inner = "/add_watch <@X_account> <ChatID> [include_links: true/false]\nEx: /add_watch @NASA -100123456789 true"
+        usage_html = "<pre>" + html.escape(usage_inner) + "</pre>"
+
         await update.message.reply_text(
-            "用法: <code>/add_watch &lt;@X账户&gt; &lt;ChatID&gt; [inclure_liens: true/false]</code>\n"
-            "示例: <code>/add_watch @NASA -100123456789 true</code>",
+            usage_html,
             reply_markup=get_main_menu_keyboard(),
-            parse_mode='HTML'  # <-- Utilisation directe du string
+            parse_mode='HTML'
         )
         return
 
@@ -56,7 +66,6 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif link_arg in ['false', 'off', 'no']:
             include_links_status = False
         else:
-            # CORRECTION DU WARNING : 'inclure_liens' sans antislash
             await update.message.reply_text(
                 "⚠️ 'inclure_liens' 参数无效。请使用 'true' 或 'false'.",
                 reply_markup=get_main_menu_keyboard(),
@@ -70,11 +79,14 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 4. Vérifier les doublons
     for monitor in monitors_data:
         if monitor.get('x_account') == x_account and monitor.get('telegram_chat_id') == telegram_chat_id:
-            safe_account = html.escape(x_account)
-            safe_chat = html.escape(telegram_chat_id)
+            safe_account = escape_for_html(x_account)
+            safe_chat = escape_for_html(telegram_chat_id)
 
+            # utiliser -> en texte simple (il sera échappé ci-dessous)
+            duplicate_msg = f"⚠️ 监控 (<code>@{safe_account}</code> -&gt; <code>{safe_chat}</code>) 已存在."
+            # note : on a remplacé '>' par '&gt;' dans la flèche pour plus de sûreté
             await update.message.reply_text(
-                f"⚠️ 监控 (<code>@{safe_account}</code> -> <code>{safe_chat}</code>) 已存在.",
+                duplicate_msg,
                 reply_markup=get_main_menu_keyboard(),
                 parse_mode='HTML'
             )
@@ -98,19 +110,23 @@ async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     logger.info(f"Nouvelle surveillance (ID: {new_id}) ajoutée par {user.username}")
 
-    # 7. Message de confirmation
+    # 7. Message de confirmation — tout ce qui est injecté est échappé
     links_text = "是 (Oui)" if include_links_status else "否 (Non)"
+    safe_id = escape_for_html(str(new_id))
+    safe_account = escape_for_html(x_account)
+    safe_chat = escape_for_html(telegram_chat_id)
+    safe_links_text = escape_for_html(links_text)
 
-    safe_id = html.escape(str(new_id))
-    safe_account = html.escape(x_account)
-    safe_chat = html.escape(telegram_chat_id)
-
-    await update.message.reply_text(
+    confirmation = (
         f"✅ 监控添加成功！\n"
         f"ID: <b>{safe_id}</b>\n"
         f"X 账户: <b>@{safe_account}</b>\n"
         f"Telegram 群组: <b>{safe_chat}</b>\n"
-        f"包含链接: <b>{links_text}</b>",
+        f"包含链接: <b>{safe_links_text}</b>"
+    )
+
+    await update.message.reply_text(
+        confirmation,
         reply_markup=get_main_menu_keyboard(),
         parse_mode='HTML'
     )
