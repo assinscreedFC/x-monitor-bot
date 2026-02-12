@@ -45,8 +45,8 @@
 
 1. **Clone the project**
    ```bash
-   git clone <your-repo-url>
-   cd telegram_bot_project
+   git clone https://github.com/assinscreedFC/x-monitor-bot.git
+   cd x-monitor-bot
    ```
 
 2. **Install dependencies**
