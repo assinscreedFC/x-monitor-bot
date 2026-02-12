@@ -1,23 +1,28 @@
-config/.env
-project
-
-
+# Environment
+.env
+.env.local
 .venv
+venv/
 
+# Playwright Sessions & Cookies
+my_playwright_profile_*/
+storage/
+cookies/
 
+# Logs & Screenshots
+logs/
+*.log
+screenshots/
 
+# Python Cache
+__pycache__/
+*.pyc
 
+# IDEs
+.vscode/
+.idea/
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Temp & Recovered
+recovered/
+pip.txt
+api_keys.txt
