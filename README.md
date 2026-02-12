@@ -5,7 +5,6 @@
 
   [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python)](https://www.python.org/)
   [![Playwright](https://img.shields.io/badge/Playwright-1.40%2B-green?style=for-the-badge&logo=playwright)](https://playwright.dev/)
-  [![Telegram](https://img.shields.io/badge/Telegram-Bot-22.3%2B-2CA5E0?style=for-the-badge&logo=telegram)](https://core.telegram.org/bots)
 
   ![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)
   ![Version](https://img.shields.io/badge/Version-1.0.0-blue?style=flat-square)
